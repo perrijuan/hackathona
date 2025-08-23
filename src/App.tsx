@@ -5,24 +5,27 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 // Páginas
 import Login from "./pages/login";
 import RegistrationScreen from "./pages/registration";
-import { type ReactNode } from "react";
 import Home from "./pages/home";
+import { type ReactNode } from "react";
+import MainLayout from "./layout/main-layout";
+import NotFound from "./pages/not-found";
+import Perfil from "./pages/perfil";
 
-// Componente para proteger rotas
+// Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    // Você pode substituir isso por um componente de Spinner/Loading
-    return <div>Carregando...</div>;
-  }
+  if (loading) return <div>Carregando...</div>;
+  if (!user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
 
-  if (!user) {
-    // Se não houver usuário, redireciona para a página de login
-    return <Navigate to="/" replace />;
-  }
+// 🔥 Novo componente para rotas públicas
+function PublicRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
 
-  // Se houver usuário, renderiza a página solicitada
+  if (loading) return <div>Carregando...</div>;
+  if (user) return <Navigate to="/home" replace />; // se já logado -> vai pro menu
   return <>{children}</>;
 }
 
@@ -31,22 +34,39 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <BrowserRouter>
         <AuthProvider>
-          {" "}
-          {/* O Provedor de Autenticação envolve todas as rotas */}
           <Routes>
             {/* Rotas Públicas */}
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<RegistrationScreen />} />
+            <Route
+              path="/"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <RegistrationScreen />
+                </PublicRoute>
+              }
+            />
 
-            {/* Rota Protegida */}
+            {/* Rotas Protegidas com Layout */}
             <Route
               path="/home"
               element={
                 <ProtectedRoute>
-                  <Home />
+                  <MainLayout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<Home />} />
+              <Route path="dashboard" element={<h1>Dashboard</h1>} />
+              <Route path="perfil" element={<Perfil />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

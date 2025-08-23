@@ -31,8 +31,6 @@ class AuthService {
 
   /**
    * Cria um documento para o usuário no Firestore se ele ainda não existir.
-   * Essencial para armazenar dados adicionais do usuário.
-   * @param user - O objeto User do Firebase Authentication.
    */
   private async criarUsuarioNoFirestoreSeNaoExistir(user: User): Promise<void> {
     const userDocRef = doc(this.db, "users", user.uid);
@@ -49,13 +47,11 @@ class AuthService {
       }
     } catch (error) {
       console.error("Erro ao verificar/criar usuário no Firestore:", error);
-      // Não lançamos o erro aqui para não interromper o fluxo de login
     }
   }
 
   /**
    * Realiza o login de um usuário com e-mail e senha.
-   * @returns O objeto do usuário autenticado.
    */
   async loginComEmailESenha(email: string, password: string): Promise<User> {
     try {
@@ -64,9 +60,21 @@ class AuthService {
         email,
         password
       );
-      // Garante que o usuário existe no Firestore
-      await this.criarUsuarioNoFirestoreSeNaoExistir(userCredential.user);
-      return userCredential.user;
+      const user = userCredential.user;
+
+      await this.criarUsuarioNoFirestoreSeNaoExistir(user);
+
+      // Verifica se o usuário tem DRE
+      const userDocRef = doc(this.db, "users", user.uid);
+      const docSnap = await getDoc(userDocRef);
+
+      if (!docSnap.exists() || !docSnap.data()?.dre) {
+        window.location.href = "/cadastro";
+      } else {
+        window.location.href = "/home";
+      }
+
+      return user;
     } catch (error: any) {
       if (
         error.code === "auth/invalid-credential" ||
@@ -83,15 +91,32 @@ class AuthService {
 
   /**
    * Realiza o login de um usuário utilizando o provedor do Google.
-   * @returns O objeto do usuário autenticado.
    */
   async loginComGoogle(): Promise<User> {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(this.auth, provider);
-      // Garante que o usuário existe no Firestore
-      await this.criarUsuarioNoFirestoreSeNaoExistir(result.user);
-      return result.user;
+      const user = result.user;
+
+      // valida domínio do Google
+      if (!user.email?.includes("ufrj")) {
+        await this.logout();
+        throw new Error("Somente e-mails da UFRJ são permitidos.");
+      }
+
+      await this.criarUsuarioNoFirestoreSeNaoExistir(user);
+
+      // verifica se o usuário tem DRE
+      const userDocRef = doc(this.db, "users", user.uid);
+      const docSnap = await getDoc(userDocRef);
+
+      if (!docSnap.exists() || !docSnap.data()?.dre) {
+        window.location.href = "/cadastro";
+      } else {
+        window.location.href = "/home";
+      }
+
+      return user;
     } catch (error: any) {
       if (error.code === "auth/popup-closed-by-user") {
         throw new Error("A janela de login com Google foi fechada.");
@@ -102,19 +127,24 @@ class AuthService {
 
   /**
    * Cria uma nova conta com e-mail e senha.
-   * @returns O objeto do usuário criado.
    */
   async criarContaComEmailESenha(
     email: string,
     password: string
   ): Promise<User> {
     try {
+      const domain = email.split("@")[1];
+      if (!domain || !domain.includes("ufrj")) {
+        throw new Error(
+          "Somente e-mails institucionais da UFRJ são permitidos."
+        );
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         this.auth,
         email,
         password
       );
-      // Cria o usuário no Firestore imediatamente após o registro
       await this.criarUsuarioNoFirestoreSeNaoExistir(userCredential.user);
       return userCredential.user;
     } catch (error: any) {
@@ -155,5 +185,4 @@ class AuthService {
   }
 }
 
-// Exporta uma instância única do serviço (Singleton Pattern)
 export const authService = new AuthService();

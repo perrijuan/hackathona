@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService } from "@/service/loginFirebase"; // Importando o serviço de autenticação
+import { authService } from "@/service/loginFirebase";
 import { toast } from "sonner";
-import { GoalIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import logo from "@/assets/logo.png";
 
@@ -145,7 +144,7 @@ export default function Login() {
                   onClick={handleGoogleLogin}
                   disabled={loading}
                 >
-                  <GoalIcon />
+                  <span className="text-lg font-bold font-serif">G</span>
                   {loading ? "Aguarde..." : "Entrar com Google"}
                 </Button>
               </div>
