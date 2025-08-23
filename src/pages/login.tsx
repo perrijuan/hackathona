@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/service/loginFirebase"; // Importando o serviço de autenticação
 import { toast } from "sonner";
 import { GoalIcon } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import logo from "@/assets/logo.png";
 
 export default function Login() {
@@ -39,7 +39,10 @@ export default function Login() {
         id: toastId,
         description: `Bem-vindo(a) de volta, ${user.email}!`,
       });
-      navigate("/register");
+      if (!user.phoneNumber) {
+        navigate("/register");
+      }
+      navigate("/home");
       // Redirecionar para o dashboard aqui
     } catch (err: any) {
       toast.error("Falha no Login", {
@@ -80,8 +83,7 @@ export default function Login() {
       <div
         className="absolute inset-0 bg-cover bg-center -z-20"
         style={{
-          backgroundImage:
-            "url('https://img.freepik.com/fotos-gratis/amigos-em-um-carro-viajando-juntos_23-2149073958.jpg?semt=ais_hybrid&w=740&q=80')",
+          backgroundImage: "url('./carona.jpg')",
         }}
       ></div>
       {/* Efeito de Vinheta Escura */}
@@ -151,9 +153,9 @@ export default function Login() {
 
             <div className="mt-6 text-center text-sm">
               Não tem uma conta?{" "}
-              <a href="#" className="font-semibold hover:underline">
+              <Link to="/register" className="font-semibold hover:underline">
                 Cadastre-se
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>

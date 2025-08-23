@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 // --- Mock do AuthService para Demonstração ---
 // Em seu projeto real, você deve importar seu `authService` real.
@@ -106,8 +106,7 @@ export default function RegistrationScreen() {
       <div
         className="absolute inset-0 bg-cover bg-center -z-20"
         style={{
-          backgroundImage:
-            "url('https://img.freepik.com/fotos-gratis/amigos-em-um-carro-viajando-juntos_23-2149073958.jpg?semt=ais_hybrid&w=740&q=80')",
+          backgroundImage: "url('./carona.jpg')",
         }}
       />
       <div className="absolute inset-0 bg-black/70 -z-10" />
@@ -261,12 +260,12 @@ export default function RegistrationScreen() {
 
             <div className="mt-4 text-center text-sm">
               Já tem uma conta?{" "}
-              <a
-                href="#"
+              <Link
+                to="/login"
                 className="font-semibold text-blue-400 hover:underline"
               >
                 Faça o login
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
