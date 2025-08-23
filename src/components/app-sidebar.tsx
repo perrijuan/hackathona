@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { ModeToggle } from "./mode-toggle";
-import { toast } from "sonner";
 
 import {
   Sidebar,
