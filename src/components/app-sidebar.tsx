@@ -54,8 +54,12 @@ const data = {
         },
         {
           title: "Mapa de Pontos",
-          url: "/menu/map",
+          url: "teste-juan",
         },
+          {
+              title: "Teste Coluna ",
+              url: "/menu/teste_juan",
+          }
       ],
     },
   ],
