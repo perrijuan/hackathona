@@ -94,7 +94,7 @@ export default function MinhasCaronas() {
   // Handlers para as ações do modal
   const handleGerenciar = async (
     idParticipante: string,
-    status: StatusParticipacao.CONFIRMADO | StatusParticipacao.RECUSADO,
+    status: StatusParticipacao,
   ) => {
     if (!caronaSelecionada) return;
     setIsModalLoading(true);

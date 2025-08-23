@@ -100,7 +100,7 @@ export const solicitarEntrada = async (
 export const gerenciarSolicitacao = async (
   idCarona: string,
   idParticipante: string,
-  novoStatus: StatusParticipacao.CONFIRMADO | StatusParticipacao.RECUSADO,
+  novoStatus: StatusParticipacao | StatusParticipacao,
 ): Promise<void> => {
   const caronaRef = doc(db, "caronas", idCarona);
 
