@@ -94,11 +94,12 @@ export default function RegistrationScreen() {
         description: `Bem-vindo(a), ${fullName}!`,
       });
       navigate("/home");
-    } catch (err: any) {
+    } catch (err) {
       toast.error("Falha no Cadastro", {
         id: toastId,
-        description: err.message || "Ocorreu um erro desconhecido.",
+        description: "Ocorreu um erro desconhecido.",
       });
+      console.error(err);
     } finally {
       setLoading(false);
     }

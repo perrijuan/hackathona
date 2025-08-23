@@ -43,11 +43,12 @@ export default function Login() {
       }
       navigate("/home");
       // Redirecionar para o dashboard aqui
-    } catch (err: any) {
+    } catch (err) {
       toast.error("Falha no Login", {
         id: toastId,
-        description: err.message || "Ocorreu um erro desconhecido.",
+        description: "Ocorreu um erro desconhecido.",
       });
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -66,11 +67,12 @@ export default function Login() {
       });
       navigate("/register");
       // Redirecionar para o dashboard aqui
-    } catch (err: any) {
+    } catch (err) {
       toast.error("Falha no Login com Google", {
         id: toastId,
-        description: err.message || "Ocorreu um erro desconhecido.",
+        description: "Ocorreu um erro desconhecido.",
       });
+      console.error(err);
     } finally {
       setLoading(false);
     }
