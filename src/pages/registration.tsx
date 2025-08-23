@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router";
 
 // --- Mock do AuthService para Demonstração ---
 // Em seu projeto real, você deve importar seu `authService` real.
@@ -47,6 +48,7 @@ export default function RegistrationScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -88,7 +90,7 @@ export default function RegistrationScreen() {
         id: toastId,
         description: `Bem-vindo(a), ${fullName}!`,
       });
-      // Redirecionar para o dashboard ou próxima etapa
+      navigate("/home");
     } catch (err: any) {
       toast.error("Falha no Cadastro", {
         id: toastId,
