@@ -26,6 +26,9 @@ import { Link, useNavigate } from "react-router";
 // Em seu projeto real, você deve importar seu `authService` real.
 const authService = {
   criarContaComEmailESenha: async (email: string, password: string) => {
+    if (password) {
+      console.log("Mock: Criando conta com email ", email);
+    }
     console.log("Mock: Criando conta para", email);
     await new Promise((resolve) => setTimeout(resolve, 1500)); // Simula delay da rede
     if (email.includes("error")) {
