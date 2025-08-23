@@ -11,6 +11,11 @@ import MainLayout from "./layout/main-layout";
 import NotFound from "./pages/not-found";
 import Perfil from "./pages/perfil";
 import TesteJuan from "./pages/teste-juan";
+import BuscarCaronas from "./pages/buscar-carona";
+import CadastrarVeiculo from "./pages/cadastrar-veiculo";
+import MeusVeiculos from "./pages/meus-veiculos";
+import MinhasCaronas from "./pages/minhas-caronas";
+import PublicarCarona from "./pages/publicar-carona";
 
 // Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -66,8 +71,12 @@ function App() {
               }
             >
               <Route index element={<Home />} />
-              <Route path="dashboard" element={<h1>Dashboard</h1>} />
+              <Route path="buscar-carona" element={<BuscarCaronas />} />
               <Route path="perfil" element={<Perfil />} />
+              <Route path="cadastrar-veiculo" element={<CadastrarVeiculo />} />
+              <Route path="meus-veiculos" element={<MeusVeiculos />} />
+              <Route path="minhas-caronas" element={<MinhasCaronas />} />
+              <Route path="publicar-carona" element={<PublicarCarona />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -40,7 +40,7 @@ const data = {
         },
         {
           title: "Procurar Carona",
-          url: "/menu/find-ride",
+          url: "/home/buscar-carona",
         },
       ],
     },
@@ -55,6 +55,20 @@ const data = {
         {
           title: "Mapa de Pontos",
           url: "/menu/map",
+        },
+      ],
+    },
+    {
+      title: "Veiculos",
+      url: "/home/veiculos",
+      items: [
+        {
+          title: "Adicionar Veículo",
+          url: "/home/veiculos/adicionar",
+        },
+        {
+          title: "Editar Veículo",
+          url: "/home/veiculos/editar",
         },
       ],
     },
