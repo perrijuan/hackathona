@@ -182,7 +182,7 @@ export default function MinhasCaronas() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-wrap gap-4 justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Minhas Caronas</h1>
           <p className="text-muted-foreground">
@@ -198,7 +198,7 @@ export default function MinhasCaronas() {
       </div>
 
       <Tabs defaultValue="agendadas">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 gap-2">
           <TabsTrigger value="agendadas">Agendadas</TabsTrigger>
           <TabsTrigger value="em_andamento">Em Andamento</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
