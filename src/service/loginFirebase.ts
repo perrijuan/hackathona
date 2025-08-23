@@ -69,7 +69,7 @@ class AuthService {
       const docSnap = await getDoc(userDocRef);
 
       if (!docSnap.exists() || !docSnap.data()?.dre) {
-        window.location.href = "/cadastro";
+        window.location.href = "/register";
       } else {
         window.location.href = "/home";
       }
@@ -111,7 +111,7 @@ class AuthService {
       const docSnap = await getDoc(userDocRef);
 
       if (!docSnap.exists() || !docSnap.data()?.dre) {
-        window.location.href = "/cadastro";
+        window.location.href = "/register";
       } else {
         window.location.href = "/home";
       }

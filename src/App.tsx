@@ -10,6 +10,7 @@ import { type ReactNode } from "react";
 import MainLayout from "./layout/main-layout";
 import NotFound from "./pages/not-found";
 import Perfil from "./pages/perfil";
+import TesteJuan from "./pages/teste-juan";
 
 // Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -52,6 +53,8 @@ function App() {
                 </PublicRoute>
               }
             />
+
+            <Route path="/teste-juan" element={<TesteJuan />} />
 
             {/* Rotas Protegidas com Layout */}
             <Route
