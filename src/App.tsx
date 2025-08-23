@@ -50,14 +50,7 @@ function App() {
                 </PublicRoute>
               }
             />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <RegistrationScreen />
-                </PublicRoute>
-              }
-            />
+            <Route path="/register" element={<RegistrationScreen />} />
 
             <Route path="/teste-juan" element={<TesteJuan />} />
 
