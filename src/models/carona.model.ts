@@ -1,19 +1,24 @@
 import { Timestamp } from "firebase/firestore";
 
-// Enum para o status da solicitação de um participante
-export enum StatusParticipacao {
-  PENDENTE = "pendente",
-  CONFIRMADO = "confirmado",
-  RECUSADO = "recusado",
-}
+// Status da solicitação de participação (substituindo enum)
+export const StatusParticipacao = {
+  PENDENTE: "pendente",
+  CONFIRMADO: "confirmado",
+  RECUSADO: "recusado",
+} as const;
 
-// Enum para o status geral da carona
-export enum StatusCorrida {
-  AGENDADA = "agendada",
-  EM_ANDAMENTO = "em_andamento",
-  FINALIZADA = "finalizada",
-  CANCELADA = "cancelada",
-}
+export type StatusParticipacao =
+  (typeof StatusParticipacao)[keyof typeof StatusParticipacao];
+
+// Status geral da carona (substituindo enum)
+export const StatusCorrida = {
+  AGENDADA: "agendada",
+  EM_ANDAMENTO: "em_andamento",
+  FINALIZADA: "finalizada",
+  CANCELADA: "cancelada",
+} as const;
+
+export type StatusCorrida = (typeof StatusCorrida)[keyof typeof StatusCorrida];
 
 // Interface para representar um ponto geográfico
 export interface Localizacao {
@@ -37,11 +42,10 @@ export interface Carona {
   origem: Localizacao;
   destino: Localizacao;
 
-  dataHoraSaida: Timestamp; // Usar o Timestamp do Firebase para facilitar queries
+  dataHoraSaida: Timestamp; // Usar o Timestamp do Firebase
   vagasDisponiveis: number;
   precoPorPessoa?: number;
 
-  // Array para armazenar quem pediu para entrar e o status
   participantes: Participante[];
 
   statusCorrida: StatusCorrida;
