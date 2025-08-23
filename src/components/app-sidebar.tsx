@@ -1,129 +1,72 @@
 import {
   Car,
   LogOut,
-  Share2,
-  GraduationCap,
-  Users,
-  MapPin,
+  Search,
+  PlusCircle,
+  UserCircle,
+  Route,
 } from "lucide-react";
 import { useState } from "react";
-import { ModeToggle } from "./mode-toggle";
+import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
+  SidebarMenuButton,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
+import { ModeToggle } from "./mode-toggle";
 import { authService } from "@/service/loginFirebase";
-import { InfoButton } from "./info-button";
 
-// 🔥 Novo menu adaptado para app de carona
-const data = {
-  navMain: [
-    {
-      title: "Caronas",
-      url: "/menu",
-      items: [
-        {
-          title: "Oferecer Carona",
-          url: "/menu/offer-ride",
-        },
-        {
-          title: "Procurar Carona",
-          url: "/home/buscar-carona",
-        },
-      ],
-    },
-    {
-      title: "Comunidade",
-      url: "/menu/community",
-      items: [
-        {
-          title: "Colegas",
-          url: "/menu/students",
-        },
-        {
-          title: "Mapa de Pontos",
-          url: "/menu/map",
-        },
-      ],
-    },
-    {
-      title: "Veiculos",
-      url: "/home/veiculos",
-      items: [
-        {
-          title: "Adicionar Veículo",
-          url: "/home/veiculos/adicionar",
-        },
-        {
-          title: "Editar Veículo",
-          url: "/home/veiculos/editar",
-        },
-      ],
-    },
-  ],
-};
+// Estrutura de menu corrigida para corresponder às suas rotas
+const menuItems = [
+  {
+    title: "Buscar Caronas",
+    url: "/home/buscar-carona",
+    icon: <Search className="w-4 h-4" />,
+  },
+  {
+    title: "Minhas Caronas",
+    url: "/home/minhas-caronas",
+    icon: <Route className="w-4 h-4" />,
+  },
+  {
+    title: "Publicar Carona",
+    url: "/home/publicar-carona",
+    icon: <PlusCircle className="w-4 h-4" />,
+  },
+  {
+    title: "Meus Veículos",
+    url: "/home/meus-veiculos",
+    icon: <Car className="w-4 h-4" />,
+  },
+  {
+    title: "Meu Perfil",
+    url: "/home/perfil",
+    icon: <UserCircle className="w-4 h-4" />,
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const handleLogoutClick = () => {
-    setShowLogoutConfirm(true);
-  };
-
-  const confirmLogout = async () => {
-    await authService.logout();
-    navigate("/");
-    setShowLogoutConfirm(false);
-  };
-
-  const cancelLogout = () => {
-    setShowLogoutConfirm(false);
-  };
-
-  const handleShare = async () => {
-    const shareData = {
-      title: "Move - Mobilidade Veicular Estudantil",
-      text: "Conecte-se com colegas e compartilhe caronas para a faculdade. Prático, econômico e sustentável. 🚗🎓",
-      url: "https://move-app.vercel.app/",
-    };
-
+  const handleLogout = async () => {
     try {
-      if (
-        navigator.share &&
-        navigator.canShare &&
-        navigator.canShare(shareData)
-      ) {
-        await navigator.share(shareData);
-      } else if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareData.url);
-        alert("Link copiado! Cole onde quiser compartilhar 📋");
-      }
+      await authService.logout();
+      toast.success("Você foi desconectado.");
+      navigate("/");
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return; // usuário cancelou o compartilhamento
-      }
-      try {
-        await navigator.clipboard.writeText(shareData.url);
-        alert("Link copiado! Cole onde quiser compartilhar 📋");
-      } catch {
-        alert("Copie o link: " + shareData.url);
-      }
+      toast.error("Erro ao tentar sair.");
+      console.error(error);
+    } finally {
+      setShowLogoutConfirm(false);
     }
   };
 
@@ -150,56 +93,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* Conteúdo principal */}
+      {/* Conteúdo principal do menu */}
       <SidebarContent className="flex-grow">
-        <SidebarGroup>
-          <SidebarMenu className="gap-2">
-            {data.navMain.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to={item.url}
-                    className="font-medium flex items-center gap-2"
-                    onClick={() => setOpenMobile(false)}
-                  >
-                    {item.title === "Caronas" && <Car className="w-4 h-4" />}
-                    {item.title === "Comunidade" && (
-                      <Users className="w-4 h-4" />
-                    )}
-                    {item.title}
-                  </Link>
-                </SidebarMenuButton>
-
-                {item.items?.length ? (
-                  <SidebarMenuSub className="ml-0 border-l-0 px-1.5">
-                    {item.items.map((sub) => (
-                      <SidebarMenuSubItem key={sub.title}>
-                        <SidebarMenuSubButton asChild>
-                          <Link
-                            to={sub.url}
-                            className="flex items-center gap-2"
-                            onClick={() => setOpenMobile(false)}
-                          >
-                            {sub.title.includes("Carona") && (
-                              <GraduationCap className="w-4 h-4" />
-                            )}
-                            {sub.title.includes("Mapa") && (
-                              <MapPin className="w-4 h-4" />
-                            )}
-                            {sub.title.includes("Colegas") && (
-                              <Users className="w-4 h-4" />
-                            )}
-                            {sub.title}
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                ) : null}
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        <SidebarMenu className="gap-2">
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild>
+                <Link
+                  to={item.url}
+                  className="font-medium flex items-center gap-2"
+                  onClick={() => setOpenMobile(false)}
+                >
+                  {item.icon}
+                  {item.title}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
       </SidebarContent>
 
       {/* Rodapé com ações */}
@@ -211,7 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </p>
             <div className="flex gap-2">
               <Button
-                onClick={confirmLogout}
+                onClick={handleLogout}
                 variant="destructive"
                 size="sm"
                 className="flex-1"
@@ -219,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 Sim
               </Button>
               <Button
-                onClick={cancelLogout}
+                onClick={() => setShowLogoutConfirm(false)}
                 variant="outline"
                 size="sm"
                 className="flex-1"
@@ -230,33 +141,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Tema</span>
+              <ModeToggle />
+            </div>
+            <div className="pt-2 border-t">
               <Button
-                onClick={handleLogoutClick}
+                onClick={() => setShowLogoutConfirm(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2 text-destructive hover:text-destructive"
+                className="w-full flex items-center gap-2 text-destructive hover:text-destructive"
               >
                 <LogOut className="w-4 h-4" />
                 Sair
               </Button>
-              <InfoButton />
-            </div>
-
-            <div className="pt-2 border-t">
-              <Button
-                onClick={handleShare}
-                variant="default"
-                className="w-full justify-center gap-2 h-10 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium shadow-sm"
-              >
-                <Share2 className="h-4 w-4" />
-                Compartilhar Move
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className="text-xs text-muted-foreground">Tema</span>
-              <ModeToggle />
             </div>
           </div>
         )}
