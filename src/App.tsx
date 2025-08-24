@@ -11,6 +11,8 @@ import MainLayout from "./layout/main-layout";
 import NotFound from "./pages/not-found";
 import Perfil from "./pages/perfil";
 import TesteJuan from "./pages/teste-juan";
+import TeamExamplePage from "./components/comunidade/team-example";
+
 
 // Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -21,7 +23,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-// 🔥 Novo componente para rotas públicas
+// 🔥 Novo comunidade para rotas públicas
 function PublicRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
@@ -55,6 +57,10 @@ function App() {
             />
 
             <Route path="/teste-juan" element={<TesteJuan />} />
+            <Route path="/team" element={<TeamExamplePage />} />
+
+
+
 
             {/* Rotas Protegidas com Layout */}
             <Route

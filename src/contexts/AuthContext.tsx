@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    // Limpa o listener quando o componente é desmontado
+    // Limpa o listener quando o comunidade é desmontado
     return () => unsubscribe();
   }, []);
 

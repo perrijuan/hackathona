@@ -53,6 +53,10 @@ const data = {
           url: "/menu/students",
         },
         {
+          title: "Equipe",
+          url: "/team",
+        },
+        {
           title: "Mapa de Pontos",
           url: "teste-juan",
         },
@@ -178,6 +182,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             )}
                             {sub.title.includes("Colegas") && (
                               <Users className="w-4 h-4" />
+                            )}
+                            {sub.title.includes("Equipe") && (
+                              <GraduationCap className="w-4 h-4" />
                             )}
                             {sub.title}
                           </Link>

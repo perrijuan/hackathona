@@ -27,7 +27,7 @@ function buildEmbedUrl(origin: string, destination: string) {
     if (hasO) {
         return `${base}?q=${encodeURIComponent(origin)}&output=embed`;
     }
-    // Fallback: centro genérico (ex: Brasil)
+    // Fallback: centro genérico (ex: Brasil) trocar para os enderços onde o app vai usar como base 
     return `${base}/embed?pb=!1m18!1m12!1m3!1d25190572.61376077!2d-60.29878635!3d-13.66553355!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x93aa35a21b11f7bf%3A0x24f645fba09294dd!2sBrasil!5e0!3m2!1spt-BR!2sbr!4v0000000000000`;
 }
 
