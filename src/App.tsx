@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 // Páginas
 import Login from "./pages/login";
-import RegistrationScreen from "./pages/registration";
 import Home from "./pages/home";
 import { type ReactNode } from "react";
 import MainLayout from "./layout/main-layout";
@@ -51,7 +50,7 @@ function App() {
                 </PublicRoute>
               }
             />
-            <Route path="/register" element={<RegistrationScreen />} />
+            <Route path="/register" element={<Perfil />} />
 
             <Route path="/teste-juan" element={<TesteJuan />} />
 
