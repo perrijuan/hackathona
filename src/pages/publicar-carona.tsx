@@ -107,7 +107,7 @@ export default function PublicarCarona() {
 
   // Handlers para os campos
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -142,7 +142,7 @@ export default function PublicarCarona() {
 
       await criarCarona(caronaData);
       toast.success("Carona publicada com sucesso!");
-      navigate("/minhas-caronas"); // Redireciona para a lista de caronas do usuário
+      navigate("/home/minhas-caronas"); // Redireciona para a lista de caronas do usuário
     } catch (error) {
       toast.error("Erro ao publicar a carona.");
       console.error(error);
