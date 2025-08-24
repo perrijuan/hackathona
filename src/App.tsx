@@ -16,6 +16,7 @@ import CadastrarVeiculo from "./pages/cadastrar-veiculo";
 import MeusVeiculos from "./pages/meus-veiculos";
 import MinhasCaronas from "./pages/minhas-caronas";
 import PublicarCarona from "./pages/publicar-carona";
+import HistoricoCaronas from "./pages/historico-caronas";
 
 // Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -70,6 +71,7 @@ function App() {
               <Route path="meus-veiculos" element={<MeusVeiculos />} />
               <Route path="minhas-caronas" element={<MinhasCaronas />} />
               <Route path="publicar-carona" element={<PublicarCarona />} />
+              <Route path="historico-caronas" element={<HistoricoCaronas />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

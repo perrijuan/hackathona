@@ -5,6 +5,7 @@ import {
   PlusCircle,
   UserCircle,
   Route,
+  BookOpenIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -44,6 +45,11 @@ const menuItems = [
     title: "Meus Veículos",
     url: "/home/meus-veiculos",
     icon: <Car className="w-4 h-4" />,
+  },
+  {
+    title: "Historico de corridas",
+    url: "/home/historico-caronas",
+    icon: <BookOpenIcon className="w-4 h-4" />,
   },
   {
     title: "Meu Perfil",

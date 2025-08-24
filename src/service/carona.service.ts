@@ -25,7 +25,7 @@ const caronasCollection = collection(db, "caronas");
 
 // 1. PUBLICAR UMA NOVA CARONA
 export const criarCarona = async (
-  caronaData: Omit<Carona, "id" | "statusCorrida" | "participantes">,
+  caronaData: Omit<Carona, "id" | "statusCorrida" | "participantes">
 ): Promise<DocumentReference> => {
   const novaCarona: Omit<Carona, "id"> = {
     ...caronaData,
@@ -38,7 +38,7 @@ export const criarCarona = async (
 // 2. EDITAR UMA CARONA EXISTENTE
 export const editarCarona = async (
   idCarona: string,
-  caronaData: Partial<Omit<Carona, "id" | "idResponsavel">>,
+  caronaData: Partial<Omit<Carona, "id" | "idResponsavel">>
 ): Promise<void> => {
   const caronaRef = doc(db, "caronas", idCarona);
   await updateDoc(caronaRef, caronaData);
@@ -50,11 +50,11 @@ export const getCaronasPublicadas = async (): Promise<Carona[]> => {
   const q = query(
     caronasCollection,
     where("statusCorrida", "==", StatusCorrida.AGENDADA),
-    where("dataHoraSaida", ">", agora),
+    where("dataHoraSaida", ">", agora)
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Carona,
+    (doc) => ({ id: doc.id, ...doc.data() } as Carona)
   );
 };
 
@@ -71,7 +71,7 @@ export const getCaronaById = async (id: string): Promise<Carona | null> => {
 // 5. USUÁRIO PEDE PARA ENTRAR NA CARONA
 export const solicitarEntrada = async (
   idCarona: string,
-  idUsuario: string,
+  idUsuario: string
 ): Promise<void> => {
   const caronaRef = doc(db, "caronas", idCarona);
   const caronaSnap = await getDoc(caronaRef);
@@ -79,7 +79,7 @@ export const solicitarEntrada = async (
   if (caronaSnap.exists()) {
     const carona = caronaSnap.data() as Carona;
     const jaParticipa = carona.participantes.some(
-      (p) => p.idUsuario === idUsuario,
+      (p) => p.idUsuario === idUsuario
     );
     if (jaParticipa) {
       throw new Error("Você já solicitou participação nesta carona.");
@@ -100,7 +100,7 @@ export const solicitarEntrada = async (
 export const gerenciarSolicitacao = async (
   idCarona: string,
   idParticipante: string,
-  novoStatus: StatusParticipacao | StatusParticipacao,
+  novoStatus: StatusParticipacao | StatusParticipacao
 ): Promise<void> => {
   const caronaRef = doc(db, "caronas", idCarona);
 
@@ -157,15 +157,32 @@ export const cancelarCarona = async (idCarona: string): Promise<void> => {
 
 // 10. BUSCAR CARONAS CRIADAS POR UM USUÁRIO
 export const getCaronasByResponsavel = async (
-  idResponsavel: string,
+  idResponsavel: string
 ): Promise<Carona[]> => {
   const q = query(
     caronasCollection,
     where("idResponsavel", "==", idResponsavel),
-    orderBy("dataHoraSaida", "desc"),
+    orderBy("dataHoraSaida", "desc")
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Carona,
+    (doc) => ({ id: doc.id, ...doc.data() } as Carona)
+  );
+};
+// 11. BUSCAR CARONAS QUE O USUÁRIO FOI PASSAGEIRO
+export const getCaronasComoPassageiro = async (
+  idUsuario: string
+): Promise<Carona[]> => {
+  const q = query(
+    caronasCollection,
+    where("participantes", "array-contains", {
+      idUsuario: idUsuario,
+      status: StatusParticipacao.CONFIRMADO, // só mostra confirmadas
+    })
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as Carona)
   );
 };
