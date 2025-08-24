@@ -1,0 +1,16 @@
+{
+  "name": "Vector – Mobilidade Veicular Estudantil",
+  "short_name": "Vector",
+  "description": "Vector é um aplicativo de carona para estudantes: rápido, seguro e econômico.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FF6B00",
+  "theme_color": "#FF6B00",
+  "icons": [
+    {
+      "src": "/icone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

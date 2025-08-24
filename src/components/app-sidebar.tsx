@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img src="/icone.svg" alt="logo" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none ml-2">
-                  <span className="font-semibold">Move</span>
+                  <span className="font-semibold">Vector</span>
                   <span className="text-xs text-muted-foreground">
                     Mobilidade Estudantil
                   </span>
