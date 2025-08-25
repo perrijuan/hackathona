@@ -11,16 +11,12 @@ export default function MainLayout() {
 
   const getPageTitle = () => {
     switch (location.pathname) {
-      case "/menu":
-        return "Dashboard";
-      case "/menu/exercises":
-        return "Exercícios";
-      case "/menu/training":
-        return "Treinos";
-      case "/menu/register":
-        return "Registros";
+      case "/home":
+        return "";
+      case "/home/cadastr-veiculo":
+        return "Cadastrar Veículo";
       default:
-        return "Dashboard";
+        return "";
     }
   };
 

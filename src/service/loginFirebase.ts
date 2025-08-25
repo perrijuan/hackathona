@@ -10,6 +10,7 @@ import {
   signOut,
   type Auth,
   type User,
+  onAuthStateChanged,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -182,6 +183,15 @@ class AuthService {
       console.error("Erro ao fazer logout:", error);
       throw new Error("Não foi possível sair. Tente novamente.");
     }
+  }
+
+  /**
+   * Observa mudanças no estado de autenticação do usuário.
+   * @param callback A função que será chamada com o objeto do usuário (ou null).
+   * @returns Uma função para cancelar a inscrição do "ouvinte".
+   */
+  observarEstadoAuth(callback: (user: User | null) => void) {
+    return onAuthStateChanged(this.auth, callback);
   }
 }
 
