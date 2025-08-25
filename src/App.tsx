@@ -12,7 +12,7 @@ import NotFound from "./pages/not-found";
 import Perfil from "./pages/perfil";
 import TesteJuan from "./pages/teste-juan";
 import TeamExamplePage from "./components/comunidade/team-example";
-
+import LandingPage from "./pages/landing-page";
 
 // Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -58,6 +58,9 @@ function App() {
 
             <Route path="/teste-juan" element={<TesteJuan />} />
             <Route path="/team" element={<TeamExamplePage />} />
+              <Route path="/landing" element={<LandingPage />} />
+
+
 
 
 
