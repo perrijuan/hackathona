@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"; // Corrigido para react-router-dom
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -25,9 +25,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { type Veiculo } from "@/models/veiculo.model";
 import { createVeiculo } from "@/service/veiculo.service";
 
-// Tipo para o estado do formulário e dos erros
-type FormData = Omit<Veiculo, "id" | "idUsuario" | "consumoMedio"> & {
-  consumoMedio: string;
+// ATUALIZADO: Tipo para o estado do formulário e dos erros
+type FormData = Omit<Veiculo, "id" | "idUsuario" | "ano"> & {
+  ano: string; // Ano como string para facilitar a entrada no formulário
 };
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
@@ -35,41 +35,45 @@ export default function CadastrarVeiculo() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // ATUALIZADO: Estado inicial do formulário
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     marca: "",
     modelo: "",
     placa: "",
-    tipo: "carro", // Valor inicial
-    consumoMedio: "",
+    cor: "", // Adicionado
+    ano: "", // Adicionado
+    tipo: "carro",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Função de validação
+  // ATUALIZADO: Função de validação
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.nome || formData.nome.length < 2) {
-      newErrors.nome = "O nome deve ter pelo menos 2 caracteres.";
-    }
+    if (!formData.nome || formData.nome.length < 2)
+      newErrors.nome = "O apelido deve ter pelo menos 2 caracteres.";
     if (!formData.marca) newErrors.marca = "A marca é obrigatória.";
     if (!formData.modelo) newErrors.modelo = "O modelo é obrigatório.";
-    if (formData.placa.length !== 7) {
-      newErrors.placa = "A placa deve ter exatamente 7 caracteres.";
-    }
-    if (!formData.tipo) newErrors.tipo = "Selecione o tipo de veículo.";
+    if (!formData.cor) newErrors.cor = "A cor é obrigatória.";
+    if (formData.placa.length !== 7)
+      newErrors.placa = "A placa deve ter 7 caracteres.";
+
+    const anoNum = parseInt(formData.ano);
     if (
-      !formData.consumoMedio ||
-      isNaN(parseFloat(formData.consumoMedio)) ||
-      parseFloat(formData.consumoMedio) <= 0
+      !formData.ano ||
+      isNaN(anoNum) ||
+      anoNum < 1950 ||
+      anoNum > new Date().getFullYear() + 1
     ) {
-      newErrors.consumoMedio = "O consumo médio deve ser um número positivo.";
+      newErrors.ano = "Insira um ano válido.";
     }
 
+    if (!formData.tipo) newErrors.tipo = "Selecione o tipo de veículo.";
+
     setErrors(newErrors);
-    // Retorna true se o objeto de erros estiver vazio
     return Object.keys(newErrors).length === 0;
   };
 
@@ -81,23 +85,21 @@ export default function CadastrarVeiculo() {
 
   // Handler específico para a placa com máscara
   const handlePlacaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const maskedValue = value
+    const value = e.target.value
       .toUpperCase()
-      .replace(/[^A-Z0-9]/g, "") // Permite apenas letras e números
-      .substring(0, 7); // Limita a 7 caracteres
-
-    setFormData((prev) => ({ ...prev, placa: maskedValue }));
+      .replace(/[^A-Z0-9]/g, "")
+      .substring(0, 7);
+    setFormData((prev) => ({ ...prev, placa: value }));
   };
 
-  // Handler para o componente Select do Shadcn
+  // Handler para o componente Select
   const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, tipo: value as FormData["tipo"] }));
+    setFormData((prev) => ({ ...prev, tipo: value }));
   };
 
-  // Função de submissão do formulário
+  // ATUALIZADO: Função de submissão do formulário
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Previne o recarregamento da página
+    e.preventDefault();
 
     if (!validateForm()) {
       toast.warning("Por favor, corrija os erros no formulário.");
@@ -113,14 +115,14 @@ export default function CadastrarVeiculo() {
     try {
       const veiculoParaSalvar = {
         ...formData,
-        consumoMedio: parseFloat(formData.consumoMedio), // Converte para número
+        ano: parseInt(formData.ano, 10), // Converte ano de volta para número
         idUsuario: user.uid,
       };
 
       await createVeiculo(veiculoParaSalvar);
 
       toast.success("Veículo cadastrado com sucesso!");
-      navigate("/home/meus-veiculos"); // Redireciona
+      navigate("/meus-veiculos"); // Redireciona para a lista de veículos
     } catch (error) {
       console.error("Erro ao cadastrar veículo:", error);
       toast.error("Ocorreu um erro ao cadastrar o veículo.");
@@ -130,17 +132,17 @@ export default function CadastrarVeiculo() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
+    <div className="flex justify-center items-start py-8 px-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle>Cadastrar Novo Veículo</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para adicionar um veículo.
+            Preencha os dados abaixo para adicionar um veículo à sua conta.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nome do Veículo */}
+            {/* Apelido do Veículo */}
             <div className="space-y-2">
               <Label htmlFor="nome">Apelido do Veículo</Label>
               <Input
@@ -155,8 +157,8 @@ export default function CadastrarVeiculo() {
               )}
             </div>
 
+            {/* Marca e Modelo */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Marca */}
               <div className="space-y-2">
                 <Label htmlFor="marca">Marca</Label>
                 <Input
@@ -170,7 +172,6 @@ export default function CadastrarVeiculo() {
                   <p className="text-sm text-destructive">{errors.marca}</p>
                 )}
               </div>
-              {/* Modelo */}
               <div className="space-y-2">
                 <Label htmlFor="modelo">Modelo</Label>
                 <Input
@@ -186,8 +187,8 @@ export default function CadastrarVeiculo() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Placa com Máscara */}
+            {/* Placa, Cor, Ano e Tipo */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="placa">Placa</Label>
                 <Input
@@ -201,7 +202,33 @@ export default function CadastrarVeiculo() {
                   <p className="text-sm text-destructive">{errors.placa}</p>
                 )}
               </div>
-              {/* Tipo */}
+              <div className="space-y-2">
+                <Label htmlFor="cor">Cor</Label>
+                <Input
+                  id="cor"
+                  name="cor"
+                  placeholder="Ex: Branco"
+                  value={formData.cor}
+                  onChange={handleChange}
+                />
+                {errors.cor && (
+                  <p className="text-sm text-destructive">{errors.cor}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ano">Ano</Label>
+                <Input
+                  id="ano"
+                  name="ano"
+                  type="number"
+                  placeholder="Ex: 2023"
+                  value={formData.ano}
+                  onChange={handleChange}
+                />
+                {errors.ano && (
+                  <p className="text-sm text-destructive">{errors.ano}</p>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="tipo">Tipo</Label>
                 <Select
@@ -210,7 +237,7 @@ export default function CadastrarVeiculo() {
                   value={formData.tipo}
                 >
                   <SelectTrigger id="tipo">
-                    <SelectValue placeholder="Selecione o tipo" />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="carro">Carro</SelectItem>
@@ -223,28 +250,14 @@ export default function CadastrarVeiculo() {
                   <p className="text-sm text-destructive">{errors.tipo}</p>
                 )}
               </div>
-              {/* Consumo Médio */}
-              <div className="space-y-2">
-                <Label htmlFor="consumoMedio">Consumo (km/l)</Label>
-                <Input
-                  id="consumoMedio"
-                  name="consumoMedio"
-                  type="number"
-                  placeholder="Ex: 12.5"
-                  value={formData.consumoMedio}
-                  onChange={handleChange}
-                />
-                {errors.consumoMedio && (
-                  <p className="text-sm text-destructive">
-                    {errors.consumoMedio}
-                  </p>
-                )}
-              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                  Cadastrando...
+                </>
               ) : (
                 "Cadastrar Veículo"
               )}

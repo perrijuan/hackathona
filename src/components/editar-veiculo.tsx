@@ -31,12 +31,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { Veiculo } from "@/models/veiculo.model";
 import { deleteVeiculo, updateVeiculo } from "@/service/veiculo.service";
+import type { Veiculo } from "@/models/veiculo.model";
 
-// Tipos para os dados e erros do formulário
-type FormData = Omit<Veiculo, "id" | "idUsuario" | "consumoMedio"> & {
-  consumoMedio: string;
+// Tipos para os dados e erros do formulário (ATUALIZADO)
+type FormData = Omit<Veiculo, "id" | "idUsuario" | "ano"> & {
+  ano: string; // 'ano' é string no formulário para facilitar a digitação
 };
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
@@ -45,7 +45,10 @@ interface EditarVeiculoModalProps {
   veiculo: Veiculo;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (veiculoAtualizado: Veiculo) => void;
+  onSuccess: (
+    veiculoAtualizado: Veiculo,
+    operacao: "update" | "delete"
+  ) => void;
 }
 
 export function EditarVeiculoModal({
@@ -60,14 +63,15 @@ export function EditarVeiculoModal({
     marca: "",
     modelo: "",
     placa: "",
+    cor: "", // <-- ADICIONADO
+    ano: "", // <-- ADICIONADO
     tipo: "carro",
-    consumoMedio: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Efeito para popular o formulário quando o veículo selecionado muda
+  // Efeito para popular o formulário quando o veículo selecionado muda (ATUALIZADO)
   useEffect(() => {
     if (veiculo) {
       setFormData({
@@ -75,28 +79,33 @@ export function EditarVeiculoModal({
         marca: veiculo.marca,
         modelo: veiculo.modelo,
         placa: veiculo.placa,
+        cor: veiculo.cor, // <-- ADICIONADO
+        ano: String(veiculo.ano), // <-- ADICIONADO
         tipo: veiculo.tipo,
-        consumoMedio: String(veiculo.consumoMedio),
       });
     }
   }, [veiculo]);
 
-  // Função de validação manual
+  // Função de validação manual (ATUALIZADO)
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     if (!formData.nome || formData.nome.length < 2)
       newErrors.nome = "O nome deve ter pelo menos 2 caracteres.";
     if (!formData.marca) newErrors.marca = "A marca é obrigatória.";
     if (!formData.modelo) newErrors.modelo = "O modelo é obrigatório.";
+    if (!formData.cor) newErrors.cor = "A cor é obrigatória.";
     if (formData.placa.length !== 7)
-      newErrors.placa = "A placa deve ter exatamente 7 caracteres.";
+      newErrors.placa = "A placa deve ter 7 caracteres.";
+    const anoNum = parseInt(formData.ano);
     if (
-      !formData.consumoMedio ||
-      isNaN(parseFloat(formData.consumoMedio)) ||
-      parseFloat(formData.consumoMedio) <= 0
+      !formData.ano ||
+      isNaN(anoNum) ||
+      anoNum < 1950 ||
+      anoNum > new Date().getFullYear() + 1
     ) {
-      newErrors.consumoMedio = "O consumo deve ser um número positivo.";
+      newErrors.ano = "Insira um ano válido.";
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -116,10 +125,10 @@ export function EditarVeiculoModal({
   };
 
   const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, tipo: value as FormData["tipo"] }));
+    setFormData((prev) => ({ ...prev, tipo: value }));
   };
 
-  // Função para salvar as alterações
+  // Função para salvar as alterações (ATUALIZADO)
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -131,12 +140,11 @@ export function EditarVeiculoModal({
     try {
       const veiculoAtualizado = {
         ...formData,
-        consumoMedio: parseFloat(formData.consumoMedio),
-        idUsuario: veiculo.idUsuario,
+        ano: parseInt(formData.ano, 10), // Converte 'ano' de volta para número
       };
       await updateVeiculo(veiculo.id!, veiculoAtualizado);
       toast.success("Veículo atualizado com sucesso!");
-      onSuccess({ ...veiculo, ...veiculoAtualizado });
+      onSuccess({ ...veiculo, ...veiculoAtualizado }, "update");
     } catch (e) {
       toast.error("Falha ao atualizar o veículo.");
       console.error(e);
@@ -151,7 +159,7 @@ export function EditarVeiculoModal({
     try {
       await deleteVeiculo(veiculo.id!);
       toast.success("Veículo excluído com sucesso!");
-      onSuccess(veiculo); // Avisa o pai que a operação foi um sucesso
+      onSuccess(veiculo, "delete"); // Avisa o pai que a operação de exclusão foi um sucesso
     } catch (error) {
       toast.error("Falha ao excluir o veículo.");
       console.error(error);
@@ -170,7 +178,7 @@ export function EditarVeiculoModal({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4 py-4">
-          {/* Apelido */}
+          {/* Apelido, Marca, Modelo */}
           <div className="space-y-2">
             <Label htmlFor="nome">Apelido do Veículo</Label>
             <Input
@@ -183,8 +191,6 @@ export function EditarVeiculoModal({
               <p className="text-sm text-destructive">{errors.nome}</p>
             )}
           </div>
-
-          {/* Marca e Modelo */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="marca">Marca</Label>
@@ -212,8 +218,8 @@ export function EditarVeiculoModal({
             </div>
           </div>
 
-          {/* Placa, Tipo e Consumo */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Placa, Cor, Ano e Tipo (ATUALIZADO) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="placa">Placa</Label>
               <Input
@@ -224,6 +230,32 @@ export function EditarVeiculoModal({
               />
               {errors.placa && (
                 <p className="text-sm text-destructive">{errors.placa}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cor">Cor</Label>
+              <Input
+                id="cor"
+                name="cor"
+                value={formData.cor}
+                onChange={handleChange}
+              />
+              {errors.cor && (
+                <p className="text-sm text-destructive">{errors.cor}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ano">Ano</Label>
+              <Input
+                id="ano"
+                name="ano"
+                type="number"
+                placeholder="Ex: 2023"
+                value={formData.ano}
+                onChange={handleChange}
+              />
+              {errors.ano && (
+                <p className="text-sm text-destructive">{errors.ano}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -239,21 +271,6 @@ export function EditarVeiculoModal({
                   <SelectItem value="outro">Outro</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="consumoMedio">Consumo (km/l)</Label>
-              <Input
-                id="consumoMedio"
-                name="consumoMedio"
-                type="number"
-                value={formData.consumoMedio}
-                onChange={handleChange}
-              />
-              {errors.consumoMedio && (
-                <p className="text-sm text-destructive">
-                  {errors.consumoMedio}
-                </p>
-              )}
             </div>
           </div>
 
@@ -277,7 +294,8 @@ export function EditarVeiculoModal({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Deseja realmente excluir o veículo "{veiculo.nome}"?
+                    Deseja realmente excluir o veículo "{veiculo.nome}"? Esta
+                    ação não pode ser desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -297,7 +315,7 @@ export function EditarVeiculoModal({
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              )}{" "}
               Salvar Alterações
             </Button>
           </DialogFooter>

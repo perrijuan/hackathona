@@ -15,44 +15,69 @@ import type { Veiculo } from "@/models/veiculo.model";
 
 const veiculosCollection = collection(db, "veiculos");
 
-// Criar um novo veículo
+/**
+ * Cria um novo veículo para um usuário.
+ * @param veiculo - Dados do veículo, sem o ID.
+ * @returns A referência do documento recém-criado.
+ */
 export const createVeiculo = async (
-  veiculo: Omit<Veiculo, "id">,
+  veiculo: Omit<Veiculo, "id">
 ): Promise<DocumentReference> => {
   return await addDoc(veiculosCollection, veiculo);
 };
 
-// Obter um veículo pelo seu ID
-export const getVeiculoById = async (id: string): Promise<Veiculo | null> => {
-  const docRef = doc(db, "veiculos", id);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as Veiculo;
-  }
-  return null;
-};
+/**
+ * Busca um veículo específico pelo seu ID de documento.
+ * @param id - O ID do veículo.
+ * @returns O objeto do veículo ou null se não encontrado.
+ */
+export async function getVeiculoById(id: string): Promise<Veiculo | null> {
+  try {
+    const veiculoDocRef = doc(veiculosCollection, id);
+    const docSnap = await getDoc(veiculoDocRef);
 
-// Obter todos os veículos de um usuário específico
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Veiculo;
+    }
+    return null;
+  } catch (error) {
+    console.error("Erro ao buscar veículo por ID:", error);
+    throw error;
+  }
+}
+
+/**
+ * Busca todos os veículos de um usuário específico.
+ * @param idUsuario - O UID do usuário.
+ * @returns Uma lista com os veículos do usuário.
+ */
 export const getVeiculosByUsuario = async (
-  idUsuario: string,
+  idUsuario: string
 ): Promise<Veiculo[]> => {
   const q = query(veiculosCollection, where("idUsuario", "==", idUsuario));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Veiculo,
+    (doc) => ({ id: doc.id, ...doc.data() } as Veiculo)
   );
 };
 
-// Atualizar dados de um veículo
+/**
+ * Atualiza os dados de um veículo existente.
+ * @param id - O ID do veículo a ser atualizado.
+ * @param veiculoData - Os campos do veículo a serem modificados.
+ */
 export const updateVeiculo = async (
   id: string,
-  veiculoData: Partial<Veiculo>,
+  veiculoData: Partial<Veiculo>
 ): Promise<void> => {
   const docRef = doc(db, "veiculos", id);
   await updateDoc(docRef, veiculoData);
 };
 
-// Apagar um veículo
+/**
+ * Apaga um veículo do banco de dados.
+ * @param id - O ID do veículo a ser apagado.
+ */
 export const deleteVeiculo = async (id: string): Promise<void> => {
   const docRef = doc(db, "veiculos", id);
   await deleteDoc(docRef);

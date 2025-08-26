@@ -1,8 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { StatusParticipacao, type Carona } from "@/models/carona.model";
-import { useAuth } from "@/contexts/AuthContext"; // <-- ATENÇÃO A ESTA LINHA
+import { useAuth } from "@/contexts/AuthContext";
 
+// --- IMPORTS CORRIGIDOS E ADICIONADOS ---
+import { type Carona, StatusParticipacao } from "@/models/carona.model";
+import { type Veiculo } from "@/models/veiculo.model";
+import {
+  getCaronasPublicadas,
+  solicitarEntrada,
+} from "@/service/carona.service";
+import { useDebounce } from "@/hooks/useDebounce";
+
+// --- Componentes de UI ---
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,58 +19,356 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowRight,
   Calendar,
   Users,
-  DollarSign,
-  Info,
   UserCheck,
   Clock,
   Ban,
   HelpCircle,
   Loader2,
+  DollarSign,
+  Info,
+  Car,
+  MessageSquare,
+  MapPin,
+  Flag,
+  X,
 } from "lucide-react";
-import {
-  getCaronasPublicadas,
-  solicitarEntrada,
-} from "@/service/carona.service";
+import { userService, type UserProfile } from "@/service/user.service";
+import { getVeiculoById } from "@/service/veiculo.service";
+import GoogleMapsRoute from "@/components/google-maps-route";
 
-export default function BuscarCaronas() {
-  const { user } = useAuth();
+// --- Subcomponente: Card da Carona ---
+const CaronaCard = ({
+  carona,
+  onSelect,
+}: {
+  carona: Carona;
+  onSelect: () => void;
+}) => (
+  <Card
+    className="cursor-pointer hover:border-primary transition-all flex flex-col"
+    onClick={onSelect}
+  >
+    <CardHeader>
+      <CardTitle className="truncate text-base font-medium">
+        {carona.origem.endereco}
+      </CardTitle>
+      <ArrowRight className="h-5 w-5 text-muted-foreground my-1" />
+      <CardTitle className="truncate text-base font-medium">
+        {carona.destino.endereco}
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-2 text-sm text-muted-foreground mt-auto">
+      <div className="flex items-center">
+        <Calendar className="mr-2 h-4 w-4" />
+        <span>
+          {new Date(carona.dataHoraSaida.seconds * 1000).toLocaleString(
+            "pt-BR",
+            { dateStyle: "short", timeStyle: "short" }
+          )}
+        </span>
+      </div>
+      <div className="flex items-center">
+        <Users className="mr-2 h-4 w-4" />
+        <span>{carona.vagasDisponiveis} vagas restantes</span>
+      </div>
+    </CardContent>
+  </Card>
+);
 
-  // Estados da UI
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalLoading, setIsModalLoading] = useState(false);
+// --- Subcomponente: Modal de Detalhes ---
+const DetalhesCaronaModal = ({
+  carona,
+  user,
+  isOpen,
+  onClose,
+}: {
+  carona: Carona | null;
+  user: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  if (!carona) return null;
 
-  // Estados de dados
-  const [todasCaronas, setTodasCaronas] = useState<Carona[]>([]);
-  const [caronasFiltradas, setCaronasFiltradas] = useState<Carona[]>([]);
-  const [caronaSelecionada, setCaronaSelecionada] = useState<Carona | null>(
-    null,
+  const [motorista, setMotorista] = useState<UserProfile | null>(null);
+  const [veiculo, setVeiculo] = useState<Veiculo | null>(null); // <-- NOVO ESTADO PARA O VEÍCULO
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [participacaoStatus, setParticipacaoStatus] = useState(
+    carona.participantes.find((p) => p.idUsuario === user?.uid)?.status
   );
 
-  // Estados dos filtros
+  // <-- LÓGICA CORRIGIDA PARA BUSCAR VEÍCULO E MOTORISTA ---
+  useEffect(() => {
+    if (carona) {
+      const buscarDetalhes = async () => {
+        setIsLoadingDetails(true);
+        try {
+          const [perfilMotorista, dadosVeiculo] = await Promise.all([
+            userService.getUserById(carona.idResponsavel),
+            getVeiculoById(carona.idVeiculo),
+          ]);
+          setMotorista(perfilMotorista);
+          setVeiculo(dadosVeiculo);
+        } catch (error) {
+          toast.error("Não foi possível carregar todos os detalhes da carona.");
+        } finally {
+          setIsLoadingDetails(false);
+        }
+      };
+      buscarDetalhes();
+    }
+  }, [carona]);
+
+  const handleSolicitar = async () => {
+    if (!user || !carona) return;
+    setIsSubmitting(true);
+    try {
+      await solicitarEntrada(carona.id!, user.uid);
+      toast.success("Solicitação enviada com sucesso!");
+      setParticipacaoStatus(StatusParticipacao.PENDENTE);
+    } catch (error: any) {
+      toast.error("Erro ao enviar solicitação.", {
+        description: error.message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const botaoStatus = useMemo(() => {
+    if (!user)
+      return { text: "Faça login para participar", disabled: true, icon: Ban };
+    if (carona.idResponsavel === user.uid)
+      return { text: "Você é o responsável", disabled: true, icon: UserCheck };
+    if (participacaoStatus) {
+      const statusMap = {
+        [StatusParticipacao.PENDENTE]: {
+          text: "Solicitação Pendente",
+          disabled: true,
+          icon: Clock,
+        },
+        [StatusParticipacao.CONFIRMADO]: {
+          text: "Participação Confirmada",
+          disabled: true,
+          icon: UserCheck,
+        },
+        [StatusParticipacao.RECUSADO]: {
+          text: "Solicitação Recusada",
+          disabled: true,
+          icon: Ban,
+        },
+      };
+      return statusMap[participacaoStatus];
+    }
+    if (carona.vagasDisponiveis <= 0)
+      return { text: "Carona sem vagas", disabled: true, icon: Ban };
+    return {
+      text: "Solicitar Participação",
+      disabled: false,
+      icon: HelpCircle,
+      action: handleSolicitar,
+    };
+  }, [carona, user, participacaoStatus]);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Detalhes da Carona</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+          {isLoadingDetails ? (
+            <div className="flex items-center space-x-4">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarImage src={motorista?.photoURL} />
+                  <AvatarFallback>
+                    {motorista?.displayName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm text-muted-foreground -mb-1">
+                    Motorista
+                  </p>
+                  <p className="font-semibold">{motorista?.displayName}</p>
+                </div>
+              </div>
+              {motorista?.telefone && (
+                <Button
+                  asChild
+                  size="icon"
+                  variant="outline"
+                  className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+                >
+                  <a
+                    href={`https://wa.me/55${motorista.telefone.replace(
+                      /\D/g,
+                      ""
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2 text-sm border-t pt-4">
+            <div className="flex items-start">
+              <MapPin className="mr-3 mt-0.5 h-4 w-4 text-primary flex-shrink-0" />
+              <span className="font-semibold">Origem:</span>
+              <span className="ml-2 truncate">{carona.origem.endereco}</span>
+            </div>
+            <div className="flex items-start">
+              <Flag className="mr-3 mt-0.5 h-4 w-4 text-primary flex-shrink-0" />
+              <span className="font-semibold">Destino:</span>
+              <span className="ml-2 truncate">{carona.destino.endereco}</span>
+            </div>
+            <div className="flex items-center">
+              <Calendar className="mr-3 h-4 w-4 text-muted-foreground" />
+              <span className="font-semibold">Data:</span>
+              <span className="ml-2">
+                {new Date(
+                  carona.dataHoraSaida.seconds * 1000
+                ).toLocaleDateString("pt-BR", {
+                  weekday: "long",
+                  day: "2-digit",
+                  month: "long",
+                })}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="mr-3 h-4 w-4 text-muted-foreground" />
+              <span className="font-semibold">Saída:</span>
+              <span className="ml-2">
+                {new Date(
+                  carona.dataHoraSaida.seconds * 1000
+                ).toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <Users className="mr-3 h-4 w-4 text-muted-foreground" />
+              <span className="font-semibold">Vagas:</span>
+              <span className="ml-2">{carona.vagasDisponiveis} restantes</span>
+            </div>
+            {carona.precoPorPessoa != null && (
+              <div className="flex items-center">
+                <DollarSign className="mr-3 h-4 w-4 text-muted-foreground" />
+                <span className="font-semibold">Valor:</span>
+                <span className="ml-2">
+                  R$ {carona.precoPorPessoa.toFixed(2).replace(".", ",")} por
+                  pessoa
+                </span>
+              </div>
+            )}
+
+            {/* --- EXIBIÇÃO CORRETA DOS DADOS DO VEÍCULO --- */}
+            {isLoadingDetails ? (
+              <Skeleton className="h-5 w-full" />
+            ) : (
+              veiculo && (
+                <div className="flex items-center">
+                  <Car className="mr-3 h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold">Veículo:</span>
+                  <span className="ml-2">
+                    {veiculo.marca} {veiculo.modelo} ({veiculo.cor})
+                  </span>
+                </div>
+              )
+            )}
+
+            {carona.observacoes && (
+              <div className="flex items-start">
+                <Info className="mr-3 mt-1 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div>
+                  <span className="font-semibold">Observações:</span>{" "}
+                  {carona.observacoes}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Ver Rota no Mapa</AccordionTrigger>
+              <AccordionContent>
+                <GoogleMapsRoute
+                  origin={carona.origem.endereco}
+                  destination={carona.destino.endereco}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+        <DialogFooter>
+          {botaoStatus && (
+            <Button
+              type="button"
+              className="w-full"
+              disabled={botaoStatus.disabled || isSubmitting}
+              onClick={botaoStatus.action}
+            >
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <botaoStatus.icon className="mr-2 h-4 w-4" />
+              )}
+              {botaoStatus.text}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// --- Componente Principal ---
+export default function BuscarCaronas() {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [todasCaronas, setTodasCaronas] = useState<Carona[]>([]);
+  const [caronaSelecionada, setCaronaSelecionada] = useState<Carona | null>(
+    null
+  );
   const [filtroOrigem, setFiltroOrigem] = useState("");
   const [filtroDestino, setFiltroDestino] = useState("");
+  const debouncedOrigem = useDebounce(filtroOrigem, 300);
+  const debouncedDestino = useDebounce(filtroDestino, 300);
 
-  // Busca inicial das caronas
   useEffect(() => {
     const buscarDados = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
         const caronas = await getCaronasPublicadas();
         setTodasCaronas(caronas);
-        setCaronasFiltradas(caronas);
       } catch (error) {
         toast.error("Não foi possível carregar as caronas.");
-        console.error(error);
       } finally {
         setIsLoading(false);
       }
@@ -69,110 +376,30 @@ export default function BuscarCaronas() {
     buscarDados();
   }, []);
 
-  // Lógica de filtragem
-  const handleFiltrar = () => {
-    let caronasResultantes = [...todasCaronas];
-    if (filtroOrigem) {
-      caronasResultantes = caronasResultantes.filter((c) =>
-        c.origem.endereco.toLowerCase().includes(filtroOrigem.toLowerCase()),
-      );
-    }
-    if (filtroDestino) {
-      caronasResultantes = caronasResultantes.filter((c) =>
-        c.destino.endereco.toLowerCase().includes(filtroDestino.toLowerCase()),
-      );
-    }
-    setCaronasFiltradas(caronasResultantes);
+  const caronasFiltradas = useMemo(() => {
+    if (!debouncedOrigem && !debouncedDestino) return todasCaronas;
+    return todasCaronas.filter((carona) => {
+      const matchOrigem = debouncedOrigem
+        ? carona.origem.endereco
+            .toLowerCase()
+            .includes(debouncedOrigem.toLowerCase())
+        : true;
+      const matchDestino = debouncedDestino
+        ? carona.destino.endereco
+            .toLowerCase()
+            .includes(debouncedDestino.toLowerCase())
+        : true;
+      return matchOrigem && matchDestino;
+    });
+  }, [todasCaronas, debouncedOrigem, debouncedDestino]);
+
+  const limparFiltros = () => {
+    setFiltroOrigem("");
+    setFiltroDestino("");
   };
-
-  // Lógica para solicitar participação
-  const handleSolicitarEntrada = async () => {
-    if (!user || !caronaSelecionada) return;
-
-    setIsModalLoading(true);
-    try {
-      await solicitarEntrada(caronaSelecionada.id!, user.uid);
-      toast.success("Solicitação enviada com sucesso!");
-
-      // Atualiza o estado local para feedback instantâneo
-      const caronaAtualizada = {
-        ...caronaSelecionada,
-        participantes: [
-          ...caronaSelecionada.participantes,
-          { idUsuario: user.uid, status: StatusParticipacao.PENDENTE },
-        ],
-      };
-      setCaronaSelecionada(caronaAtualizada);
-      setTodasCaronas((prev) =>
-        prev.map((c) => (c.id === caronaAtualizada.id ? caronaAtualizada : c)),
-      );
-      // Também atualiza a lista filtrada para refletir a mudança se visível
-      setCaronasFiltradas((prev) =>
-        prev.map((c) => (c.id === caronaAtualizada.id ? caronaAtualizada : c)),
-      );
-    } catch (error) {
-      toast.error("Erro ao enviar solicitação.");
-      console.error(error);
-    } finally {
-      setIsModalLoading(false);
-    }
-  };
-
-  // Hook para determinar o estado do botão no modal
-  const botaoStatus = useMemo(() => {
-    if (!caronaSelecionada) return null;
-    if (!user)
-      return { text: "Faça login para participar", disabled: true, icon: Ban };
-    if (caronaSelecionada.idResponsavel === user.uid)
-      return { text: "Você é o responsável", disabled: true, icon: UserCheck };
-
-    const participacao = caronaSelecionada.participantes.find(
-      (p) => p.idUsuario === user.uid,
-    );
-    if (participacao) {
-      switch (participacao.status) {
-        case StatusParticipacao.PENDENTE:
-          return { text: "Solicitação Pendente", disabled: true, icon: Clock };
-        case StatusParticipacao.CONFIRMADO:
-          return {
-            text: "Participação Confirmada",
-            disabled: true,
-            icon: UserCheck,
-          };
-        case StatusParticipacao.RECUSADO:
-          return { text: "Solicitação Recusada", disabled: true, icon: Ban };
-      }
-    }
-    if (caronaSelecionada.vagasDisponiveis <= 0)
-      return { text: "Carona sem vagas", disabled: true, icon: Ban };
-
-    return {
-      text: "Solicitar Participação",
-      disabled: false,
-      icon: HelpCircle,
-      action: handleSolicitarEntrada,
-    };
-  }, [caronaSelecionada, user]);
-
-  const LoadingSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[...Array(3)].map((_, i) => (
-        <Card key={i}>
-          <CardHeader>
-            <Skeleton className="h-6 w-3/4" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Skeleton className="h-5 w-full" />
-            <Skeleton className="h-5 w-2/3" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      {/* Seção de Filtros */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Encontre sua Carona</CardTitle>
@@ -197,161 +424,43 @@ export default function BuscarCaronas() {
                 onChange={(e) => setFiltroDestino(e.target.value)}
               />
             </div>
-            <Button onClick={handleFiltrar}>Buscar</Button>
+            <Button onClick={limparFiltros} variant="ghost">
+              <X className="mr-2 h-4 w-4" />
+              Limpar Filtros
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {/* Seção de Resultados */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Caronas Disponíveis</h2>
         {isLoading ? (
-          <LoadingSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-40 w-full" />
+            ))}
+          </div>
         ) : caronasFiltradas.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {caronasFiltradas.map((carona) => (
-              <Card
+              <CaronaCard
                 key={carona.id}
-                className="cursor-pointer hover:border-primary transition-all"
-                onClick={() => setCaronaSelecionada(carona)}
-              >
-                <CardHeader>
-                  <CardTitle className="truncate">
-                    {carona.origem.endereco}
-                  </CardTitle>
-                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="truncate">
-                    {carona.destino.endereco}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    <span>
-                      {carona.dataHoraSaida
-                        .toDate()
-                        .toLocaleDateString("pt-BR")}{" "}
-                      às{" "}
-                      {carona.dataHoraSaida
-                        .toDate()
-                        .toLocaleTimeString("pt-BR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <Users className="mr-2 h-4 w-4" />
-                    <span>{carona.vagasDisponiveis} vagas</span>
-                  </div>
-                </CardContent>
-              </Card>
+                carona={carona}
+                onSelect={() => setCaronaSelecionada(carona)}
+              />
             ))}
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-8">
-            Nenhuma carona disponível encontrada.
+            Nenhuma carona disponível encontrada com esses filtros.
           </p>
         )}
       </div>
-
-      {/* Modal de Detalhes da Carona */}
-      <Dialog
-        open={!!caronaSelecionada}
-        onOpenChange={(isOpen) => !isOpen && setCaronaSelecionada(null)}
-      >
-        <DialogContent className="sm:max-w-lg">
-          {caronaSelecionada && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Detalhes da Carona</DialogTitle>
-                <DialogDescription>
-                  De{" "}
-                  <span className="font-semibold text-primary">
-                    {caronaSelecionada.origem.endereco}
-                  </span>{" "}
-                  para{" "}
-                  <span className="font-semibold text-primary">
-                    {caronaSelecionada.destino.endereco}
-                  </span>
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4 text-sm">
-                <div className="flex items-center">
-                  <Calendar className="mr-3 h-4 w-4 text-muted-foreground" />
-                  <span>
-                    <span className="font-semibold">Data:</span>{" "}
-                    {caronaSelecionada.dataHoraSaida
-                      .toDate()
-                      .toLocaleDateString("pt-BR", {
-                        weekday: "long",
-                        day: "2-digit",
-                        month: "long",
-                      })}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="mr-3 h-4 w-4 text-muted-foreground" />
-                  <span>
-                    <span className="font-semibold">Horário de saída:</span>{" "}
-                    {caronaSelecionada.dataHoraSaida
-                      .toDate()
-                      .toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <Users className="mr-3 h-4 w-4 text-muted-foreground" />
-                  <span>
-                    <span className="font-semibold">Vagas restantes:</span>{" "}
-                    {caronaSelecionada.vagasDisponiveis}
-                  </span>
-                </div>
-                {caronaSelecionada.precoPorPessoa != null && (
-                  <div className="flex items-center">
-                    <DollarSign className="mr-3 h-4 w-4 text-muted-foreground" />
-                    <span>
-                      <span className="font-semibold">Valor:</span> R${" "}
-                      {caronaSelecionada.precoPorPessoa
-                        .toFixed(2)
-                        .replace(".", ",")}{" "}
-                      por pessoa
-                    </span>
-                  </div>
-                )}
-                {caronaSelecionada.observacoes && (
-                  <div className="flex items-start">
-                    <Info className="mr-3 mt-1 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div>
-                      <span className="font-semibold">Observações:</span>{" "}
-                      {caronaSelecionada.observacoes}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                {botaoStatus && (
-                  <Button
-                    type="button"
-                    className="w-full"
-                    disabled={botaoStatus.disabled || isModalLoading}
-                    onClick={botaoStatus.action}
-                  >
-                    {isModalLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <botaoStatus.icon className="mr-2 h-4 w-4" />
-                    )}
-                    {botaoStatus.text}
-                  </Button>
-                )}
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <DetalhesCaronaModal
+        carona={caronaSelecionada}
+        user={user}
+        isOpen={!!caronaSelecionada}
+        onClose={() => setCaronaSelecionada(null)}
+      />
     </div>
   );
 }

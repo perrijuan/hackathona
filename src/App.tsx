@@ -1,34 +1,50 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { type ReactNode } from "react";
+
+// Provedores e Contextos
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
-// Páginas
-import Login from "./pages/login";
-import RegistrationScreen from "./pages/registration";
-import Home from "./pages/home";
-import { type ReactNode } from "react";
+// Layout
 import MainLayout from "./layout/main-layout";
+
+// Importando suas páginas reais
+import BuscarCarona from "./pages/buscar-carona";
+import CadastrarVeiculo from "./pages/cadastrar-veiculo";
+import HistoricoCaronas from "./pages/historico-caronas";
+import Home from "./pages/home";
+import LandingPage from "./pages/landing-page";
+import Login from "./pages/login";
+import MeusVeiculos from "./pages/meus-veiculos";
+import MinhasCaronas from "./pages/minhas-caronas";
 import NotFound from "./pages/not-found";
 import Perfil from "./pages/perfil";
-import TesteJuan from "./pages/teste-juan";
-import TeamExamplePage from "./components/comunidade/team-example";
-import LandingPage from "./pages/landing-page";
+import PublicarCarona from "./pages/publicar-carona";
+import Registration from "./pages/registration";
 
 // Componente para proteger rotas privadas
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Carregando...</div>;
-  if (!user) return <Navigate to="/" replace />;
+  if (loading) {
+    return <div>Carregando...</div>; // Considere um componente de loading melhor
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 }
 
-// 🔥 Novo comunidade para rotas públicas
+// Componente para rotas públicas
 function PublicRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Carregando...</div>;
-  if (user) return <Navigate to="/home" replace />; // se já logado -> vai pro menu
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+  if (user) {
+    return <Navigate to="/home" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -38,7 +54,15 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rotas Públicas */}
+            {/* --- Rotas Públicas --- */}
+            <Route
+              path="/"
+              element={
+                <PublicRoute>
+                  <LandingPage />
+                </PublicRoute>
+              }
+            />
             <Route
               path="/login"
               element={
@@ -51,28 +75,34 @@ function App() {
               path="/register"
               element={
                 <PublicRoute>
-                  <RegistrationScreen />
+                  <Registration />
                 </PublicRoute>
               }
             />
 
-            <Route path="/teste-juan" element={<TesteJuan />} />
-            <Route path="/team" element={<TeamExamplePage />} />
-            <Route path="/" element={<LandingPage />} />
-
-            {/* Rotas Protegidas com Layout */}
+            {/* --- Rotas Protegidas (dentro do MainLayout) --- */}
             <Route
-              path="/home"
               element={
                 <ProtectedRoute>
                   <MainLayout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Home />} />
-              <Route path="dashboard" element={<h1>Dashboard</h1>} />
-              <Route path="perfil" element={<Perfil />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/perfil" element={<Perfil />} />
+
+              {/* Caronas */}
+              <Route path="/publicar-carona" element={<PublicarCarona />} />
+              <Route path="/buscar-carona" element={<BuscarCarona />} />
+              <Route path="/minhas-caronas" element={<MinhasCaronas />} />
+              <Route path="/historico-caronas" element={<HistoricoCaronas />} />
+
+              {/* Veículos */}
+              <Route path="/meus-veiculos" element={<MeusVeiculos />} />
+              <Route path="/cadastrar-veiculo" element={<CadastrarVeiculo />} />
             </Route>
+
+            {/* Rota para URLs não encontradas */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

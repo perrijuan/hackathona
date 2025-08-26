@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 
-// Status da solicitação de participação (substituindo enum)
+// Status da solicitação de participação
 export const StatusParticipacao = {
   PENDENTE: "pendente",
   CONFIRMADO: "confirmado",
@@ -10,7 +10,7 @@ export const StatusParticipacao = {
 export type StatusParticipacao =
   (typeof StatusParticipacao)[keyof typeof StatusParticipacao];
 
-// Status geral da carona (substituindo enum)
+// Status geral da carona
 export const StatusCorrida = {
   AGENDADA: "agendada",
   EM_ANDAMENTO: "em_andamento",
@@ -37,7 +37,7 @@ export interface Participante {
 export interface Carona {
   id?: string; // ID do documento no Firestore
   idResponsavel: string; // ID do usuário que criou a carona
-  idVeiculo: string;
+  idVeiculo: string; // ID do veículo associado a esta carona
 
   origem: Localizacao;
   destino: Localizacao;

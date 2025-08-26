@@ -12,7 +12,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, BellRing, UserCheck, UserX } from "lucide-react";
+import {
+  ArrowRight,
+  BellRing,
+  UserCheck,
+  UserX,
+  PlayCircle,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
@@ -21,14 +29,12 @@ export default function Home() {
   const [caronasParticipando, setCaronasParticipando] = useState<Carona[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Usamos useRef para guardar o estado anterior e comparar para gerar notificações
   const caronasAnteriores = useRef<Map<string, Carona>>(new Map());
 
   useEffect(() => {
     if (!user) return;
 
-    // --- LISTENER 1: Notificações para o MOTORISTA ---
-    // Ouve as caronas onde o usuário é o responsável
+    // Listener para o MOTORISTA
     const qMotorista = query(
       collection(db, "caronas"),
       where("idResponsavel", "==", user.uid)
@@ -40,40 +46,33 @@ export default function Home() {
       );
       setMinhasCaronas(caronasData);
 
-      // Lógica de notificação para novas solicitações
       snapshot.docChanges().forEach((change) => {
-        if (change.type === "modified") {
-          const caronaNova = change.doc.data() as Carona;
-          const caronaAntiga = caronasAnteriores.current.get(change.doc.id);
-          if (
-            caronaAntiga &&
-            caronaNova.participantes.length > caronaAntiga.participantes.length
-          ) {
-            const novoParticipante = caronaNova.participantes.find(
-              (pNew) =>
-                !caronaAntiga.participantes.some(
-                  (pOld) => pOld.idUsuario === pNew.idUsuario
-                )
-            );
-            if (novoParticipante?.status === StatusParticipacao.PENDENTE) {
-              toast("Nova solicitação de carona!", {
-                description: `Um usuário pediu para entrar na sua carona para ${caronaNova.destino.endereco}.`,
-                icon: <BellRing className="h-5 w-5" />,
-              });
-            }
+        const caronaNova = {
+          id: change.doc.id,
+          ...change.doc.data(),
+        } as Carona;
+        const caronaAntiga = caronasAnteriores.current.get(change.doc.id);
+
+        if (change.type === "modified" && caronaAntiga) {
+          const novoParticipante = caronaNova.participantes.find(
+            (pNew) =>
+              !caronaAntiga.participantes.some(
+                (pOld) => pOld.idUsuario === pNew.idUsuario
+              )
+          );
+          if (novoParticipante?.status === StatusParticipacao.PENDENTE) {
+            toast("Nova solicitação de carona!", {
+              description: `${novoParticipante.idUsuario} quer entrar na sua carona para ${caronaNova.destino.endereco}.`,
+              icon: <BellRing className="h-5 w-5" />,
+            });
           }
         }
-        // Atualiza o mapa de referência
-        caronasAnteriores.current.set(
-          change.doc.id,
-          change.doc.data() as Carona
-        );
+        caronasAnteriores.current.set(change.doc.id, caronaNova);
       });
       setIsLoading(false);
     });
 
-    // --- LISTENER 2: Notificações para o PASSAGEIRO ---
-    // Ouve as caronas onde o ID do usuário está na lista de participantes
+    // Listener para o PASSAGEIRO
     const qPassageiro = query(
       collection(db, "caronas"),
       where("participanteIds", "array-contains", user.uid)
@@ -85,15 +84,18 @@ export default function Home() {
       );
       setCaronasParticipando(caronasData);
 
-      // Lógica de notificação para aceite/recusa
       snapshot.docChanges().forEach((change) => {
-        if (change.type === "modified") {
-          const caronaNova = change.doc.data() as Carona;
-          const caronaAntiga = caronasAnteriores.current.get(change.doc.id);
+        const caronaNova = {
+          id: change.doc.id,
+          ...change.doc.data(),
+        } as Carona;
+        const caronaAntiga = caronasAnteriores.current.get(change.doc.id);
+
+        if (change.type === "modified" && caronaAntiga) {
           const meuStatusNovo = caronaNova.participantes.find(
             (p) => p.idUsuario === user.uid
           )?.status;
-          const meuStatusAntigo = caronaAntiga?.participantes.find(
+          const meuStatusAntigo = caronaAntiga.participantes.find(
             (p) => p.idUsuario === user.uid
           )?.status;
 
@@ -110,22 +112,40 @@ export default function Home() {
               });
             }
           }
+
+          if (caronaNova.statusCorrida !== caronaAntiga.statusCorrida) {
+            switch (caronaNova.statusCorrida) {
+              case StatusCorrida.EM_ANDAMENTO:
+                toast.info("A viagem começou!", {
+                  description: `A carona para ${caronaNova.destino.endereco} foi iniciada.`,
+                  icon: <PlayCircle className="h-5 w-5" />,
+                });
+                break;
+              case StatusCorrida.FINALIZADA:
+                toast.success("Viagem finalizada!", {
+                  description: `A carona para ${caronaNova.destino.endereco} foi concluída.`,
+                  icon: <CheckCircle2 className="h-5 w-5" />,
+                });
+                break;
+              case StatusCorrida.CANCELADA:
+                toast.error("Viagem cancelada", {
+                  description: `A carona para ${caronaNova.destino.endereco} foi cancelada pelo motorista.`,
+                  icon: <XCircle className="h-5 w-5" />,
+                });
+                break;
+            }
+          }
         }
-        caronasAnteriores.current.set(
-          change.doc.id,
-          change.doc.data() as Carona
-        );
+        caronasAnteriores.current.set(change.doc.id, caronaNova);
       });
     });
 
-    // Função de limpeza: desliga os listeners quando o componente é desmontado
     return () => {
       unsubMotorista();
       unsubPassageiro();
     };
   }, [user]);
 
-  // Filtra para mostrar apenas caronas atuais e futuras
   const caronasAtivasMotorista = minhasCaronas.filter(
     (c) =>
       c.statusCorrida === StatusCorrida.AGENDADA ||
@@ -138,7 +158,7 @@ export default function Home() {
   );
 
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">
           Olá, {user?.displayName || user?.email}!
@@ -155,7 +175,6 @@ export default function Home() {
         </div>
       ) : (
         <>
-          {/* Seção de Caronas como Motorista */}
           {caronasAtivasMotorista.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-2xl font-semibold">
@@ -174,7 +193,9 @@ export default function Home() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {carona.dataHoraSaida.toDate().toLocaleString("pt-BR", {
+                    {new Date(
+                      carona.dataHoraSaida.seconds * 1000
+                    ).toLocaleString("pt-BR", {
                       dateStyle: "full",
                       timeStyle: "short",
                     })}
@@ -184,7 +205,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Seção de Caronas como Passageiro */}
           {caronasAtivasPassageiro.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-2xl font-semibold">
@@ -209,7 +229,9 @@ export default function Home() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {carona.dataHoraSaida.toDate().toLocaleString("pt-BR", {
+                    {new Date(
+                      carona.dataHoraSaida.seconds * 1000
+                    ).toLocaleString("pt-BR", {
                       dateStyle: "full",
                       timeStyle: "short",
                     })}
@@ -219,7 +241,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Mensagem de boas-vindas se não houver caronas */}
           {caronasAtivasMotorista.length === 0 &&
             caronasAtivasPassageiro.length === 0 && (
               <div className="text-center py-16 border-2 border-dashed rounded-lg">
@@ -231,10 +252,12 @@ export default function Home() {
                 </p>
                 <div className="flex justify-center gap-4">
                   <Button asChild>
-                    <Link to="/home/buscar-carona">Procurar Carona</Link>
+                    {/* ATENÇÃO: Verifique se estas rotas existem no seu App.tsx */}
+                    <Link to="/menu/find-ride">Procurar Carona</Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/home/publicar-carona">Oferecer Carona</Link>
+                    {/* ATENÇÃO: Verifique se estas rotas existem no seu App.tsx */}
+                    <Link to="/menu/offer-ride">Oferecer Carona</Link>
                   </Button>
                 </div>
               </div>
