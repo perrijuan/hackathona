@@ -40,7 +40,7 @@ export default function Login() {
       if (!user.phoneNumber) {
         navigate("/register");
       }
-      navigate("/home");
+      navigate("/");
       // Redirecionar para o dashboard aqui
     } catch (err) {
       toast.error("Falha no Login", {

@@ -2,8 +2,7 @@ import {
   Car,
   CirclePlus,
   History,
-  LayoutDashboard,
-  Link2,
+  HomeIcon,
   List,
   LogOut,
   Search,
@@ -27,13 +26,14 @@ import {
   useSidebar,
 } from "./ui/sidebar";
 import { ModeToggle } from "./mode-toggle";
+import { toast } from "sonner";
 
 // Estrutura de navegação baseada nas suas novas páginas
 const navLinks = [
   {
-    label: "Painel",
+    label: "Início",
     href: "/home",
-    icon: LayoutDashboard,
+    icon: HomeIcon,
   },
   {
     group: "Caronas",
@@ -89,8 +89,44 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   const handleShare = async () => {
-    // ... (lógica de compartilhamento pode ser mantida aqui) ...
-    alert("Funcionalidade de compartilhar!");
+    const shareData = {
+      title: "Vector – caronas entre estudantes",
+      text: "Combine caronas com colegas e reduza custos e emissões no seu trajeto diário.",
+      url: "https://hackatona.vercel.app/",
+    };
+
+    try {
+      // Verificar se a API Web Share está disponível (principalmente mobile)
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare(shareData)
+      ) {
+        await navigator.share(shareData);
+        // Não mostrar toast aqui pois o usuário já vê a ação de compartilhar
+      } else if (navigator.share) {
+        // Tentar compartilhar mesmo sem canShare (compatibilidade)
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copiar link para área de transferência
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("Link copiado! Cole onde quiser compartilhar 📋");
+      }
+    } catch (error) {
+      // Se usuário cancelou o compartilhamento, não mostrar erro
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+
+      // Em caso de erro, tentar fallback
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("Link copiado! Cole onde quiser compartilhar 📋");
+      } catch {
+        // Último recurso: mostrar o link para copiar manualmente
+        toast.error("Copie o link: " + shareData.url);
+      }
+    }
   };
 
   return (
@@ -109,7 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="mt-12">
         {navLinks.map((link, index) =>
           link.group ? (
             <SidebarGroup key={index}>
@@ -139,8 +175,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={pathname === link.href}
                   onClick={() => setOpenMobile(false)}
                 >
-                  <Link to={link.href!}>
-                    <Link2 className="h-4 w-4" />
+                  <Link to={link.href!} className="pl-4">
+                    <HomeIcon className="h-4 w-4" />
                     {link.label}
                   </Link>
                 </SidebarMenuButton>
@@ -181,7 +217,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="w-full justify-center gap-2"
             >
               <Share2 className="h-4 w-4" />
-              Compartilhar Move
+              Compartilhar o Vector
             </Button>
             <div className="flex items-center justify-between pt-2 border-t">
               <Button
