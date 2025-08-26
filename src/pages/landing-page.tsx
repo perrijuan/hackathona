@@ -229,7 +229,7 @@ const Hero: FC = () => (
         </div>
         <div className="flex justify-center items-center">
           <img
-            src="https://images.unsplash.com/photo-1618172193763-c586e9f585b3?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src="https://img.freepik.com/fotos-premium/grupo-de-amigos-faz-uma-viagem-senta-se-dentro-de-um-carro-moderno-conversando-e-sorrindo_146671-24331.jpg"
             alt="Ilustração de rotas e conexões universitárias"
             className="rounded-2xl shadow-2xl w-full max-w-md h-auto object-cover aspect-[4/3] transform transition-transform duration-500 hover:scale-105"
           />

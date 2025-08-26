@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/service/loginFirebase";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router";
-import logo from "@/assets/logo.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -92,7 +91,7 @@ export default function Login() {
 
       <Card className="max-w-md w-full bg-black/40 text-white border-white/20 backdrop-blur-sm shadow-2xl">
         <CardHeader className="text-center">
-          <img src={logo} alt="logo" className="mx-auto w-32" />
+          <img src="/logo.svg" alt="logo" className="mx-auto w-48 my-8" />
           <CardTitle className="text-3xl font-bold">Acesse sua Conta</CardTitle>
           <CardDescription className="text-white/70 pt-2">
             Use suas credenciais para entrar no sistema.
