@@ -5,6 +5,6 @@ export interface Veiculo {
   marca: string;
   modelo: string;
   placa: string;
-  tipo: "carro" | "moto" | "van" | "outro";
-  consumoMedio: number; // Em km/l
+  cor: string;
+  ano: number;
 }

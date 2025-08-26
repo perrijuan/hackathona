@@ -24,9 +24,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+
 import type { Veiculo } from "@/models/veiculo.model";
 import { getVeiculosByUsuario } from "@/service/veiculo.service";
 import { criarCarona } from "@/service/carona.service";
+import GoogleMapsRoute from "@/components/google-maps-route";
 
 // Tipos para o estado do formulário e erros
 type FormData = {
@@ -130,7 +132,7 @@ export default function PublicarCarona() {
       const caronaData = {
         idResponsavel: user.uid,
         idVeiculo: formData.idVeiculo,
-        origem: { endereco: formData.origem, latitude: 0, longitude: 0 }, // Simplificado, idealmente usar uma API de geocodificação
+        origem: { endereco: formData.origem, latitude: 0, longitude: 0 }, // simplificado
         destino: { endereco: formData.destino, latitude: 0, longitude: 0 },
         dataHoraSaida: dataHoraSaidaTimestamp,
         vagasDisponiveis: parseInt(formData.vagasDisponiveis),
@@ -142,7 +144,7 @@ export default function PublicarCarona() {
 
       await criarCarona(caronaData);
       toast.success("Carona publicada com sucesso!");
-      navigate("/home/minhas-caronas"); // Redireciona para a lista de caronas do usuário
+      navigate("/home/minhas-caronas");
     } catch (error) {
       toast.error("Erro ao publicar a carona.");
       console.error(error);
@@ -222,6 +224,18 @@ export default function PublicarCarona() {
                 )}
               </div>
             </div>
+
+            {/* Prévia do Mapa */}
+            {formData.origem && formData.destino && (
+              <div className="mt-4">
+                <Label>Prévia da Rota</Label>
+                <GoogleMapsRoute
+                  origin={formData.origem}
+                  destination={formData.destino}
+                  className="w-full h-72 mt-2 rounded-md border"
+                />
+              </div>
+            )}
 
             {/* Data e Hora */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -11,7 +11,7 @@ import {
   arrayUnion,
   DocumentReference,
   orderBy,
-  runTransaction, // <-- CORREÇÃO: Import que estava faltando
+  runTransaction,
 } from "firebase/firestore";
 import {
   StatusCorrida,
@@ -50,7 +50,8 @@ export const getCaronasPublicadas = async (): Promise<Carona[]> => {
   const q = query(
     caronasCollection,
     where("statusCorrida", "==", StatusCorrida.AGENDADA),
-    where("dataHoraSaida", ">", agora)
+    where("dataHoraSaida", ">", agora),
+    orderBy("dataHoraSaida", "asc") // Ordena as mais próximas primeiro
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(
@@ -74,9 +75,14 @@ export const solicitarEntrada = async (
   idUsuario: string
 ): Promise<void> => {
   const caronaRef = doc(db, "caronas", idCarona);
-  const caronaSnap = await getDoc(caronaRef);
 
-  if (caronaSnap.exists()) {
+  // Usamos transação para garantir a checagem e a escrita de forma atômica
+  await runTransaction(db, async (transaction) => {
+    const caronaSnap = await transaction.get(caronaRef);
+    if (!caronaSnap.exists()) {
+      throw new Error("Esta carona não existe mais.");
+    }
+
     const carona = caronaSnap.data() as Carona;
     const jaParticipa = carona.participantes.some(
       (p) => p.idUsuario === idUsuario
@@ -84,28 +90,30 @@ export const solicitarEntrada = async (
     if (jaParticipa) {
       throw new Error("Você já solicitou participação nesta carona.");
     }
-  }
+    if (carona.vagasDisponiveis <= 0) {
+      throw new Error("Desculpe, não há mais vagas nesta carona.");
+    }
 
-  const novoParticipante: Participante = {
-    idUsuario: idUsuario,
-    status: StatusParticipacao.PENDENTE,
-  };
-  await updateDoc(caronaRef, {
-    participantes: arrayUnion(novoParticipante),
+    const novoParticipante: Participante = {
+      idUsuario: idUsuario,
+      status: StatusParticipacao.PENDENTE,
+    };
+
+    transaction.update(caronaRef, {
+      participantes: arrayUnion(novoParticipante),
+    });
   });
 };
 
-// 6. RESPONSÁVEL ACEITA OU RECUSA UMA SOLICITAÇÃO (VERSÃO CORRETA E SEGURA COM TRANSAÇÃO)
-// CORREÇÃO: Removida a versão antiga e duplicada desta função.
+// 6. RESPONSÁVEL ACEITA OU RECUSA UMA SOLICITAÇÃO
 export const gerenciarSolicitacao = async (
   idCarona: string,
   idParticipante: string,
-  novoStatus: StatusParticipacao | StatusParticipacao
+  novoStatus: StatusParticipacao
 ): Promise<void> => {
   const caronaRef = doc(db, "caronas", idCarona);
 
   await runTransaction(db, async (transaction) => {
-    // 1. Lê os dados DENTRO da transação para garantir que estão atualizados
     const caronaSnap = await transaction.get(caronaRef);
     if (!caronaSnap.exists()) {
       throw new Error("Carona não encontrada!");
@@ -113,8 +121,15 @@ export const gerenciarSolicitacao = async (
 
     const carona = caronaSnap.data() as Carona;
     let vagasDisponiveis = carona.vagasDisponiveis;
+    const participanteAtual = carona.participantes.find(
+      (p) => p.idUsuario === idParticipante
+    );
 
-    // 2. Prepara as alterações
+    // Só faz sentido gerenciar quem está pendente
+    if (participanteAtual?.status !== StatusParticipacao.PENDENTE) {
+      throw new Error("Esta solicitação já foi gerenciada.");
+    }
+
     if (novoStatus === StatusParticipacao.CONFIRMADO) {
       if (vagasDisponiveis <= 0) {
         throw new Error("Não há vagas disponíveis.");
@@ -129,7 +144,6 @@ export const gerenciarSolicitacao = async (
       return p;
     });
 
-    // 3. Escreve as alterações DENTRO da transação
     transaction.update(caronaRef, {
       participantes: participantesAtualizados,
       vagasDisponiveis: vagasDisponiveis,
@@ -155,7 +169,7 @@ export const cancelarCarona = async (idCarona: string): Promise<void> => {
   await updateDoc(caronaRef, { statusCorrida: StatusCorrida.CANCELADA });
 };
 
-// 10. BUSCAR CARONAS CRIADAS POR UM USUÁRIO
+// 10. BUSCAR CARONAS CRIADAS POR UM USUÁRIO (Minhas Caronas)
 export const getCaronasByResponsavel = async (
   idResponsavel: string
 ): Promise<Carona[]> => {
@@ -169,20 +183,29 @@ export const getCaronasByResponsavel = async (
     (doc) => ({ id: doc.id, ...doc.data() } as Carona)
   );
 };
-// 11. BUSCAR CARONAS QUE O USUÁRIO FOI PASSAGEIRO
+
+// 11. BUSCAR CARONAS QUE O USUÁRIO PARTICIPA (Histórico/Próximas Viagens)
 export const getCaronasComoPassageiro = async (
   idUsuario: string
 ): Promise<Carona[]> => {
+  // Firestore não permite queries 'array-contains' com múltiplos 'where' complexos.
+  // A solução é buscar por ID de participante e filtrar no cliente.
   const q = query(
     caronasCollection,
-    where("participantes", "array-contains", {
-      idUsuario: idUsuario,
-      status: StatusParticipacao.CONFIRMADO, // só mostra confirmadas
-    })
+    where("participantesIds", "array-contains", idUsuario), // Assumindo que você tenha um campo 'participantesIds' para otimizar a busca
+    orderBy("dataHoraSaida", "desc")
   );
 
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as Carona)
-  );
+
+  // Filtra para retornar apenas as caronas onde o usuário está confirmado
+  return querySnapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() } as Carona))
+    .filter((carona) =>
+      carona.participantes.some(
+        (p) =>
+          p.idUsuario === idUsuario &&
+          p.status === StatusParticipacao.CONFIRMADO
+      )
+    );
 };
