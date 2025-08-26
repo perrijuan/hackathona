@@ -1,21 +1,24 @@
-// Import the functions you need from the SDKs you need
+// Importe as funções que você precisa dos SDKs que você precisa
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+// A configuração do Firebase é preenchida com variáveis de ambiente do Vite.
+// Apenas variáveis com o prefixo VITE_ são expostas no lado do cliente.
 const firebaseConfig = {
-  apiKey: "AIzaSyDbPHEvXs2IRJz3wz64Sz1ugZWD0Dyt7yc",
-  authDomain: "hackatonamob4.firebaseapp.com",
-  projectId: "hackatonamob4",
-  storageBucket: "hackatonamob4.firebasestorage.app",
-  messagingSenderId: "507969476135",
-  appId: "1:507969476135:web:1a25499c72d8708e4a2002",
-  measurementId: "G-X485Y54BL9",
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
+// Inicialize o Firebase
 const app = initializeApp(firebaseConfig);
+// A inicialização do Analytics é opcional e pode ser removida se não for usada.
 const analytics = getAnalytics(app);
 const auth: Auth = getAuth(app);
 const db = getFirestore(app);
