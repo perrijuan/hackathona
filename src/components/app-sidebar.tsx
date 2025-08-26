@@ -97,9 +97,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <img src="/icone.svg" alt="logo" className="w-8 h-8" />
+          <div className="p-2 bg-primary rounded-lg">
+            <img src="/icone.svg" alt="logo" className="w-6 h-6" />
+          </div>
           <div className="flex flex-col">
-            <h2 className="text-lg font-semibold">Move</h2>
+            <h2 className="text-lg font-semibold">Vector</h2>
             <span className="text-xs text-muted-foreground -mt-1">
               Mobilidade Estudantil
             </span>
