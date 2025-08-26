@@ -40,7 +40,7 @@ function App() {
           <Routes>
             {/* Rotas Públicas */}
             <Route
-              path="/"
+              path="/login"
               element={
                 <PublicRoute>
                   <Login />
@@ -58,12 +58,7 @@ function App() {
 
             <Route path="/teste-juan" element={<TesteJuan />} />
             <Route path="/team" element={<TeamExamplePage />} />
-              <Route path="/landing" element={<LandingPage />} />
-
-
-
-
-
+            <Route path="/" element={<LandingPage />} />
 
             {/* Rotas Protegidas com Layout */}
             <Route
