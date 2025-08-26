@@ -14,11 +14,11 @@ export default function MainLayout() {
     switch (location.pathname) {
       case "/home":
         return "Painel Principal"; // Adicionado um título para a Home
-      case "/menu/offer-ride":
+      case "/publicar-carona":
         return "Oferecer Carona";
-      case "/menu/find-ride":
+      case "/buscar-carona":
         return "Procurar Carona";
-      case "/home/cadastr-veiculo":
+      case "/cadastrar-veiculo":
         return "Cadastrar Veículo";
       default:
         // Lógica para pegar o último segmento da URL como fallback

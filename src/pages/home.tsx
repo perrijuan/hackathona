@@ -253,11 +253,11 @@ export default function Home() {
                 <div className="flex justify-center gap-4">
                   <Button asChild>
                     {/* ATENÇÃO: Verifique se estas rotas existem no seu App.tsx */}
-                    <Link to="/menu/find-ride">Procurar Carona</Link>
+                    <Link to="/buscar-carona">Procurar Carona</Link>
                   </Button>
                   <Button asChild variant="outline">
                     {/* ATENÇÃO: Verifique se estas rotas existem no seu App.tsx */}
-                    <Link to="/menu/offer-ride">Oferecer Carona</Link>
+                    <Link to="/publicar-carona">Oferecer Carona</Link>
                   </Button>
                 </div>
               </div>

@@ -144,7 +144,7 @@ export default function PublicarCarona() {
 
       await criarCarona(caronaData);
       toast.success("Carona publicada com sucesso!");
-      navigate("/home/minhas-caronas");
+      navigate("/minhas-caronas");
     } catch (error) {
       toast.error("Erro ao publicar a carona.");
       console.error(error);
