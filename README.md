@@ -11,6 +11,12 @@ O projeto nasceu em um hackathon com a missão de reduzir desigualdades no acess
 - 💸 Baixo Custo Real – Preços acessíveis, pensados para a realidade financeira de estudantes.  
 - 🏆 Gamificação (futuro) – Pontos e recompensas para motoristas e usuários ativos.  
 
+## 🔗 Links Úteis  
+
+- Repositório GitHub: https://github.com/claudio-asj/hackathona  
+- Deploy (Vercel): https://hackatona.vercel.app/  
+- Deploy de Teste (Vercel Dev): https://hackaton-dev.vercel.app/
+
 ## 🛠️ Tecnologias  
 
 - ⚡ Vite – Bundler rápido e moderno  
