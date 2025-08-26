@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-
-import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/service/loginFirebase";
 import { Button } from "./ui/button";
 import {
@@ -80,7 +78,6 @@ const navLinks = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
   const { pathname } = useLocation();

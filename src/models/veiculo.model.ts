@@ -7,4 +7,5 @@ export interface Veiculo {
   placa: string;
   cor: string;
   ano: number;
+  tipo: string;
 }
