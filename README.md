@@ -257,13 +257,12 @@ gunicorn chat.wsgi:app
 
 ### Testar Endpoints
 ```bash
-# Health check
+
 curl http://localhost:5000/api/chat/health
 
-# Criar sessão
+
 curl -X POST http://localhost:5000/api/chat/session/create
 
-# Enviar mensagem
 curl -X POST http://localhost:5000/api/chat/session/{session_id}/message \
   -H "Content-Type: application/json" \
   -d '{"message": "Olá, como você está?"}'
