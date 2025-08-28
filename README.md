@@ -202,9 +202,6 @@ python run.py
 - `DEFAULT_TEMPERATURE`: Temperatura para geração (0.0-2.0)
 - `CORS_ORIGINS`: Origens permitidas para CORS
 
-### Modelos Disponíveis
-
-- `microsoft/DialoGPT-small`: Modelo pequeno (117M parâmetros)
 
 
 ## Desenvolvimento
