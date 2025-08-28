@@ -6,7 +6,7 @@ O projeto nasceu em um hackathon com a missão de reduzir desigualdades no acess
 ## Imagens 
 <img width="1885" height="916" alt="Screenshot_20250827_215702" src="https://github.com/user-attachments/assets/a169cfbd-caa4-46a1-9b8b-c7c9566fc73f" />
 <img width="1910" height="915" alt="Screenshot_20250827_220150" src="https://github.com/user-attachments/assets/2d33ba35-11e4-4e3c-b7d8-296bccf92ed5" />
-<img width="1920" height="1080" alt="Screenshot_20250827_221529" src="https://github.com/user-attachments/assets/b2298e2c-2e79-410d-8dea-462fedeca823" />
+<img width="1920" height="932" alt="Screenshot_20250827_221529" src="https://github.com/user-attachments/assets/b23a5a48-4ad7-4d60-84b5-06798fa5f397" />
 <img width="1910" height="915" alt="Screenshot_20250827_220150" src="https://github.com/user-attachments/assets/95ced67c-088f-4874-8920-84c39be32183" />
 <img width="1897" height="923" alt="Screenshot_20250827_220031" src="https://github.com/user-attachments/assets/1ab7314e-585a-4b06-820e-d3a47eb4c221" />
 
